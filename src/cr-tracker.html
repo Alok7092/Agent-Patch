@@ -1226,6 +1226,302 @@ textarea.field-textarea:focus {
   }
   .step-owner, .step-date { display: none; }
 }
+
+/* ─── Developer view ────────────────────────────────────────────────────── */
+.dev-selector-bar {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow-card);
+}
+
+.dev-selector-bar label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.dev-selector-bar select {
+  appearance: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 28px 6px 10px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s;
+  min-width: 180px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.dev-selector-bar select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* Section headings inside dev view */
+.dev-section {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.dev-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+
+.dev-section-header h2 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.dev-section-body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Action card */
+.action-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--border);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: box-shadow 0.12s;
+}
+
+.action-card:hover {
+  box-shadow: var(--shadow-card);
+}
+
+.action-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.action-card-desc {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.action-card-step {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.action-card-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.action-card-footer {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.action-comment {
+  flex: 1;
+  appearance: none;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  color: var(--text);
+  outline: none;
+  resize: none;
+  min-height: 32px;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.action-comment::placeholder { color: var(--text-muted); opacity: 1; }
+
+.action-comment:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.btn-sm {
+  font-size: 0.75rem;
+  padding: 5px 12px;
+  flex-shrink: 0;
+  align-self: flex-end;
+}
+
+/* My CRs card */
+.my-cr-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.my-cr-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-raised);
+  flex-wrap: wrap;
+}
+
+.my-cr-card-desc {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.my-cr-phase-bar {
+  display: flex;
+  gap: 3px;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 10px 14px 0;
+}
+
+.my-cr-phase-seg {
+  flex: 1;
+  border-radius: 2px;
+  opacity: 0.2;
+  transition: opacity 0.1s;
+}
+
+.my-cr-phase-seg.done    { opacity: 1; }
+.my-cr-phase-seg.current { opacity: 1; outline: 2px solid var(--surface); outline-offset: 1px; }
+
+.my-cr-phases {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 8px 14px 12px;
+}
+
+.my-cr-phase-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8125rem;
+}
+
+.my-cr-phase-summary:last-child { border-bottom: none; }
+
+.my-cr-phase-name {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  min-width: 72px;
+  flex-shrink: 0;
+}
+
+.my-cr-phase-name[data-phase="Scope"]      { color: var(--phase-scope); }
+.my-cr-phase-name[data-phase="Build"]      { color: var(--phase-build); }
+.my-cr-phase-name[data-phase="Test"]       { color: var(--phase-test); }
+.my-cr-phase-name[data-phase="Go-live"]    { color: var(--phase-golive); }
+.my-cr-phase-name[data-phase="Validation"] { color: var(--phase-validation); }
+
+.my-cr-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.my-cr-step-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--text);
+  padding: 1px 0;
+}
+
+.my-cr-step-item.muted { color: var(--text-muted); }
+
+.my-cr-step-icon {
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  width: 16px;
+  text-align: center;
+}
+
+.my-cr-phase-complete {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--status-ok);
+  font-weight: 500;
+}
+
+.my-cr-phase-future {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Empty state for dev view */
+.dev-empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+@media (max-width: 560px) {
+  .action-card-footer {
+    flex-direction: column;
+  }
+  .btn-sm { align-self: flex-end; }
+  .my-cr-phase-name { min-width: 60px; }
+}
 </style>
 
 <!-- ─── Markup ─────────────────────────────────────────────────────────── -->
@@ -1253,6 +1549,9 @@ textarea.field-textarea:focus {
     <span class="banner-icon" aria-hidden="true">⚠</span>
     Database not available — data will not persist
   </div>
+
+  <!-- PM-only content wrapper -->
+  <div id="pm-content">
 
   <!-- KPI strip -->
   <div class="kpi-strip" role="region" aria-label="Summary">
@@ -1320,6 +1619,42 @@ textarea.field-textarea:focus {
       <p>Add your first Change Request to start tracking the lifecycle.</p>
     </div>
   </section>
+
+  </div><!-- end #pm-content -->
+</div>
+
+<!-- ─── Developer view ────────────────────────────────────────────────────── -->
+<div id="dev-view" hidden>
+  <div class="content">
+    <!-- Developer selector -->
+    <div class="dev-selector-bar">
+      <label for="dev-selector">Viewing as developer:</label>
+      <select id="dev-selector" onchange="onDevSelectorChange()">
+        <option value="">— select developer —</option>
+      </select>
+    </div>
+
+    <!-- My Action Items -->
+    <section class="dev-section" aria-label="My Action Items">
+      <div class="dev-section-header">
+        <h2>My Action Items</h2>
+        <span id="dev-action-count" style="font-size:0.75rem; color:var(--text-muted);"></span>
+      </div>
+      <div class="dev-section-body" id="dev-action-items">
+        <!-- populated by JS -->
+      </div>
+    </section>
+
+    <!-- My CRs -->
+    <section class="dev-section" aria-label="My CRs">
+      <div class="dev-section-header">
+        <h2>My CRs</h2>
+      </div>
+      <div class="dev-section-body" id="dev-my-crs">
+        <!-- populated by JS -->
+      </div>
+    </section>
+  </div>
 </div>
 
 <!-- ─── Team modal ────────────────────────────────────────────────────────── -->
@@ -1565,13 +1900,28 @@ async function boot() {
     if (saved) currentUser = saved;
   } catch {}
 
+  // Restore selected dev from localStorage
+  try {
+    const savedDev = localStorage.getItem('crTrackerSelectedDev');
+    if (savedDev) selectedDev = savedDev;
+  } catch {}
+
+  // Restore view from localStorage (default: pm)
+  try {
+    const savedView = localStorage.getItem('crTrackerView');
+    if (savedView === 'dev') currentView = 'dev';
+  } catch {}
+
   // Load team from DB
   await loadTeam();
 
   // Load CRs from DB
   await loadCRs();
 
-  renderAll();
+  // Apply view — also calls renderCRTable or renderDevView as needed
+  setView(currentView);
+  renderUserChip();
+  updateAddCRButton();
 }
 
 /* ── Team ────────────────────────────────────────────────────────────── */
@@ -1765,11 +2115,294 @@ function confirmUserSelect() {
 }
 
 /* ── View toggle ─────────────────────────────────────────────────────── */
+let selectedDev = '';
+
 function setView(v) {
   currentView = v;
+  try { localStorage.setItem('crTrackerView', v); } catch {}
+
   document.getElementById('btn-view-pm').classList.toggle('active', v === 'pm');
   document.getElementById('btn-view-dev').classList.toggle('active', v === 'dev');
-  renderCRTable();
+
+  const isPm = v === 'pm';
+
+  // PM-only elements
+  document.getElementById('pm-content').hidden  = !isPm;
+  document.getElementById('btn-add-cr').hidden  = !isPm;
+  document.getElementById('btn-manage-team').hidden = !isPm;
+
+  // Dev-only element
+  document.getElementById('dev-view').hidden = isPm;
+
+  if (!isPm) {
+    populateDevSelector();
+    renderDevView();
+  } else {
+    renderCRTable();
+  }
+}
+
+function populateDevSelector() {
+  const sel  = document.getElementById('dev-selector');
+  const prev = sel.value || selectedDev;
+  sel.innerHTML = '<option value="">— select developer —</option>';
+  const devs = teamMembers.filter(m => m.role === 'Developer');
+  for (const m of devs) {
+    const o = document.createElement('option');
+    o.value       = m.name;
+    o.textContent = m.name;
+    sel.appendChild(o);
+  }
+  // Restore selection
+  if (prev && devs.find(m => m.name === prev)) {
+    sel.value   = prev;
+    selectedDev = prev;
+  } else if (devs.length === 1) {
+    sel.value   = devs[0].name;
+    selectedDev = devs[0].name;
+    try { localStorage.setItem('crTrackerSelectedDev', selectedDev); } catch {}
+  }
+}
+
+function onDevSelectorChange() {
+  const sel   = document.getElementById('dev-selector');
+  selectedDev = sel.value;
+  try { localStorage.setItem('crTrackerSelectedDev', selectedDev); } catch {}
+  renderDevView();
+}
+
+/* ── Developer view rendering ────────────────────────────────────────── */
+function renderDevView() {
+  renderDevActionItems();
+  renderDevMyCRs();
+}
+
+function renderDevActionItems() {
+  const container = document.getElementById('dev-action-items');
+  const countEl   = document.getElementById('dev-action-count');
+  container.innerHTML = '';
+
+  if (!selectedDev) {
+    container.innerHTML = '<div class="dev-empty">Select a developer above to view their action items.</div>';
+    countEl.textContent = '';
+    return;
+  }
+
+  // Developer roles that map to the selected person
+  const DEV_ROLES = ['AMS Developer', 'AMS Developer Peer'];
+
+  // Gather actionable items: active CRs for selected dev, steps where dev is owner and step is not completed/locked
+  const devCRs = crs.filter(c => c.status === 'active' && c.developer === selectedDev);
+
+  const items = [];
+  const now   = Date.now();
+
+  for (const cr of devCRs) {
+    for (const t of LIFECYCLE_TEMPLATE) {
+      // Only steps the developer role covers
+      if (!DEV_ROLES.some(r => t.ownerRole === r)) continue;
+
+      const docId    = `step_${String(t.step).padStart(2, '0')}`;
+      const sd       = (cr.steps && cr.steps[docId]) || { status: 'pending' };
+      const status   = sd.status || 'pending';
+
+      if (status === 'completed' || status === 'skipped_warning' || status === 'locked') continue;
+
+      // Compute days this step has been pending
+      let sinceDate = cr.created_date || new Date().toISOString();
+      if (t.step > 1) {
+        for (let n = t.step - 1; n >= 1; n--) {
+          const pid  = `step_${String(n).padStart(2, '0')}`;
+          const psd  = cr.steps && cr.steps[pid];
+          if (psd && psd.completed_date) { sinceDate = psd.completed_date; break; }
+        }
+      }
+      const daysPending = Math.floor((now - new Date(sinceDate).getTime()) / 86400000);
+      const threshold   = t.overdueThresholdDays || 3;
+
+      // Urgency
+      let urgency, borderColor;
+      if (daysPending > threshold) {
+        urgency     = 'critical';
+        borderColor = 'var(--status-blocked)';
+      } else if (daysPending > threshold * 0.5) {
+        urgency     = 'warning';
+        borderColor = 'var(--status-risk)';
+      } else {
+        urgency     = 'normal';
+        borderColor = 'var(--status-ok)';
+      }
+
+      items.push({ cr, t, daysPending, urgency, borderColor, threshold });
+    }
+  }
+
+  // Sort: critical → warning → normal, then by days pending desc within group
+  const urgencyOrder = { critical: 0, warning: 1, normal: 2 };
+  items.sort((a, b) => {
+    const uo = urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
+    return uo !== 0 ? uo : b.daysPending - a.daysPending;
+  });
+
+  if (items.length === 0) {
+    const devName = escHtml(selectedDev);
+    container.innerHTML = `<div class="dev-empty">All caught up — no pending actions for ${devName}.</div>`;
+    countEl.textContent = '';
+    return;
+  }
+
+  countEl.textContent = `${items.length} item${items.length !== 1 ? 's' : ''}`;
+
+  for (const { cr, t, daysPending, borderColor } of items) {
+    const descRaw  = cr.description || 'Untitled CR';
+    const descShort = descRaw.length > 50 ? descRaw.slice(0, 48) + '…' : descRaw;
+    const hintPart = t.hint ? `<br><span style="font-style:italic;">${escHtml(t.hint)}</span>` : '';
+
+    const card = document.createElement('div');
+    card.className = 'action-card';
+    card.style.borderLeftColor = borderColor;
+    card.innerHTML = `
+      <div class="action-card-header">
+        <span class="mono" style="color:var(--accent); font-weight:600; flex-shrink:0;">${escHtml(cr.crNumber)}</span>
+        <span class="action-card-desc" title="${escAttr(descRaw)}">${escHtml(descShort)}</span>
+      </div>
+      <div class="action-card-step">Step ${t.step}: ${escHtml(t.name)}</div>
+      <div class="action-card-meta">
+        Pending ${daysPending} day${daysPending !== 1 ? 's' : ''} &middot; ${escHtml(t.phase)} phase${hintPart}
+      </div>
+      <div class="action-card-footer">
+        <textarea class="action-comment" id="action-comment-${escAttr(cr.crNumber)}-${t.step}" placeholder="Add a comment (optional)" rows="1"></textarea>
+        <button class="btn btn-primary btn-sm" onclick="completeStepFromDevView('${escAttr(cr.crNumber)}', ${t.step})">Mark Complete</button>
+      </div>
+    `;
+    container.appendChild(card);
+  }
+}
+
+function renderDevMyCRs() {
+  const container = document.getElementById('dev-my-crs');
+  container.innerHTML = '';
+
+  if (!selectedDev) {
+    container.innerHTML = '<div class="dev-empty">Select a developer above to view their CRs.</div>';
+    return;
+  }
+
+  const devCRs = crs.filter(c => c.status === 'active' && c.developer === selectedDev);
+
+  if (devCRs.length === 0) {
+    container.innerHTML = `<div class="dev-empty">No CRs assigned to ${escHtml(selectedDev)}.</div>`;
+    return;
+  }
+
+  const phases    = ['Scope', 'Build', 'Test', 'Go-live', 'Validation'];
+  const phaseVars = {
+    Scope:      'var(--phase-scope)',
+    Build:      'var(--phase-build)',
+    Test:       'var(--phase-test)',
+    'Go-live':  'var(--phase-golive)',
+    Validation: 'var(--phase-validation)'
+  };
+
+  for (const cr of devCRs) {
+    // Determine current step number
+    let currentStepNum = 25;
+    for (const t of LIFECYCLE_TEMPLATE) {
+      const docId  = `step_${String(t.step).padStart(2, '0')}`;
+      const sd     = cr.steps && cr.steps[docId];
+      const status = sd ? sd.status : 'pending';
+      if (status !== 'completed') { currentStepNum = t.step; break; }
+    }
+
+    const crPhase  = currentStepNum <= 24 ? LIFECYCLE_TEMPLATE[currentStepNum - 1].phase : 'Validation';
+    const phaseIdx = phases.indexOf(crPhase);
+
+    // Phase progress bar
+    const phaseBarHtml = phases.map((p, i) => {
+      let cls = 'my-cr-phase-seg';
+      if (i < phaseIdx)       cls += ' done';
+      else if (i === phaseIdx) cls += ' current';
+      return `<div class="${cls}" style="background:${phaseVars[p]};" title="${escAttr(p)}"></div>`;
+    }).join('');
+
+    // Per-phase step summaries
+    const phaseSummaries = phases.map(p => {
+      const phaseSteps  = LIFECYCLE_TEMPLATE.filter(t => t.phase === p);
+      const completed   = phaseSteps.filter(t => {
+        const sid = `step_${String(t.step).padStart(2, '0')}`;
+        const st  = (cr.steps && cr.steps[sid] && cr.steps[sid].status) || 'pending';
+        return st === 'completed' || st === 'skipped_warning';
+      }).length;
+      const total = phaseSteps.length;
+
+      let bodyHtml;
+      if (p === crPhase) {
+        // Current phase — list individual steps
+        const stepLines = phaseSteps.map(t => {
+          const sid    = `step_${String(t.step).padStart(2, '0')}`;
+          const sd     = cr.steps && cr.steps[sid];
+          const status = sd ? sd.status : 'pending';
+
+          let icon, cls = '';
+          if (status === 'completed' || status === 'skipped_warning') {
+            icon = status === 'skipped_warning' ? '⚠' : '✓';
+          } else if (status === 'locked') {
+            icon = '🔒'; cls = ' muted';
+          } else if (t.step === currentStepNum) {
+            icon = '●';
+          } else {
+            icon = '○'; cls = ' muted';
+          }
+          const stepName = t.name.length > 48 ? t.name.slice(0, 46) + '…' : t.name;
+          return `<div class="my-cr-step-item${cls}"><span class="my-cr-step-icon">${icon}</span>${escHtml(stepName)}</div>`;
+        }).join('');
+        bodyHtml = `<div class="my-cr-steps-list">${stepLines}</div>`;
+      } else if (phaseIdx > phases.indexOf(p)) {
+        // Completed phase
+        bodyHtml = `<div class="my-cr-phase-complete">✓ ${completed}/${total} steps complete</div>`;
+      } else {
+        // Future phase
+        bodyHtml = `<div class="my-cr-phase-future">0/${total} steps</div>`;
+      }
+
+      return `
+        <div class="my-cr-phase-summary">
+          <div class="my-cr-phase-name" data-phase="${escAttr(p)}">${escHtml(p)}</div>
+          ${bodyHtml}
+        </div>
+      `;
+    }).join('');
+
+    const descRaw   = cr.description || 'Untitled CR';
+    const descShort = descRaw.length > 50 ? descRaw.slice(0, 48) + '…' : descRaw;
+
+    const card = document.createElement('div');
+    card.className = 'my-cr-card';
+    card.innerHTML = `
+      <div class="my-cr-card-header">
+        <span class="mono" style="color:var(--accent); font-weight:600; flex-shrink:0;">${escHtml(cr.crNumber)}</span>
+        <span class="my-cr-card-desc" title="${escAttr(descRaw)}">${escHtml(descShort)}</span>
+        <span class="phase-badge" data-phase="${escAttr(crPhase)}" style="flex-shrink:0;">${escHtml(crPhase)}</span>
+      </div>
+      <div class="my-cr-phase-bar">${phaseBarHtml}</div>
+      <div class="my-cr-phases">${phaseSummaries}</div>
+    `;
+    container.appendChild(card);
+  }
+}
+
+/* completeStep wrapper that picks up the inline comment from the action card */
+async function completeStepFromDevView(crNumber, stepNum) {
+  const commentEl  = document.getElementById(`action-comment-${crNumber}-${stepNum}`);
+  const preComment = commentEl ? commentEl.value.trim() : '';
+
+  // Pre-seed the dialog textarea so the user doesn't have to retype
+  const _origShow = window._completionDialogPreComment;
+  window._completionDialogPreComment = preComment;
+
+  await completeStep(crNumber, stepNum);
+
+  window._completionDialogPreComment = '';
 }
 
 /* ── CR status computation ───────────────────────────────────────────── */
@@ -2352,7 +2985,11 @@ function formatDate(ts) {
 
 /* ── Render all ──────────────────────────────────────────────────────── */
 function renderAll() {
-  renderCRTable(); // also calls renderKPIs internally
+  if (currentView === 'dev') {
+    renderDevView();
+  } else {
+    renderCRTable(); // also calls renderKPIs internally
+  }
   renderUserChip();
   updateAddCRButton();
 }
@@ -2532,7 +3169,7 @@ function showCompletionDialog(crNumber, stepNum, hasSkippedEarlier) {
 
     const template = LIFECYCLE_TEMPLATE[stepNum - 1];
     nameEl.textContent    = `Step ${stepNum}: ${template.name}`;
-    commentEl.value       = '';
+    commentEl.value       = window._completionDialogPreComment || '';
     warnEl.hidden         = !hasSkippedEarlier;
 
     modal.hidden = false;
