@@ -1522,6 +1522,229 @@ textarea.field-textarea:focus {
   .btn-sm { align-self: flex-end; }
   .my-cr-phase-name { min-width: 60px; }
 }
+
+/* ─── Activity log (per-CR) ────────────────────────────────────────────── */
+.activity-section {
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+
+.activity-toggle {
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-size: 0.6875rem;
+}
+.activity-toggle:hover { color: var(--text); }
+.activity-toggle:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+.activity-chevron {
+  display: inline-block;
+  font-size: 0.6875rem;
+  transition: transform 0.15s;
+}
+.activity-section.open .activity-chevron { transform: rotate(90deg); }
+
+.activity-body {
+  display: none;
+  flex-direction: column;
+  gap: 0;
+  padding-bottom: 12px;
+}
+.activity-section.open .activity-body { display: flex; }
+
+.activity-loading {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  padding: 6px 0;
+}
+
+.activity-entry {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8125rem;
+  align-items: flex-start;
+}
+.activity-entry:last-child { border-bottom: none; }
+
+.activity-entry-line {
+  border-left: 3px solid var(--border);
+  padding-left: 10px;
+  flex: 1;
+  min-width: 0;
+}
+.activity-entry-line.override { border-left-color: var(--status-risk); background: rgba(245,158,11,0.04); padding: 4px 10px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.activity-entry-line.skipped  { border-left-color: var(--text-muted); }
+
+.activity-entry-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding-top: 2px;
+  min-width: 100px;
+  text-align: right;
+}
+
+.activity-entry-actor {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.activity-entry-action {
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.activity-entry-details {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-style: italic;
+}
+
+/* ─── Global audit slide-out panel ────────────────────────────────────── */
+.audit-scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--modal-scrim);
+  z-index: 200;
+}
+
+.audit-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(480px, 100vw);
+  background: var(--surface-raised);
+  border-left: 1px solid var(--border);
+  box-shadow: var(--shadow-modal);
+  display: flex;
+  flex-direction: column;
+  z-index: 201;
+}
+
+.audit-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.audit-panel-header h2 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.audit-filter-bar {
+  display: flex;
+  gap: 6px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+  white-space: nowrap;
+}
+.filter-chip:hover { color: var(--text); border-color: var(--text-muted); }
+.filter-chip.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.filter-chip:focus-visible { outline: 2px solid var(--focus-ring); }
+
+.audit-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 20px;
+}
+
+.audit-global-entry {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+  font-size: 0.8125rem;
+}
+.audit-global-entry:last-child { border-bottom: none; }
+
+.audit-global-cr {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 600;
+  color: var(--accent);
+  flex-shrink: 0;
+  min-width: 90px;
+  font-size: 0.75rem;
+  padding-top: 2px;
+}
+
+.audit-global-content {
+  flex: 1;
+  min-width: 0;
+  border-left: 3px solid var(--border);
+  padding-left: 10px;
+}
+.audit-global-content.override { border-left-color: var(--status-risk); background: rgba(245,158,11,0.04); padding: 4px 10px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.audit-global-content.skipped  { border-left-color: var(--text-muted); }
+
+.audit-global-time {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-align: right;
+  padding-top: 2px;
+}
+
+.audit-empty {
+  padding: 32px 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+/* Activity button in top bar */
+.btn-activity {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 5px 12px;
+}
+.btn-activity:hover { color: var(--text); background: var(--surface); border-color: var(--text-muted); }
 </style>
 
 <!-- ─── Markup ─────────────────────────────────────────────────────────── -->
@@ -1536,6 +1759,7 @@ textarea.field-textarea:focus {
       <button class="view-toggle-btn active" id="btn-view-pm" onclick="setView('pm')">PM</button>
       <button class="view-toggle-btn" id="btn-view-dev" onclick="setView('dev')">Developer</button>
     </div>
+    <button class="btn btn-activity" id="btn-activity" onclick="openAuditPanel()" aria-label="Open activity log" hidden>Activity</button>
     <button class="btn btn-primary" id="btn-add-cr" disabled onclick="openAddCRModal()">
       <span aria-hidden="true">+</span> Add CR
     </button>
@@ -1825,6 +2049,24 @@ textarea.field-textarea:focus {
   </div>
 </div>
 
+<!-- ─── Global audit log panel ──────────────────────────────────────────────── -->
+<div class="audit-scrim" id="audit-scrim" hidden onclick="closeAuditPanel()"></div>
+<aside class="audit-panel" id="audit-panel" hidden role="dialog" aria-modal="true" aria-labelledby="audit-panel-title">
+  <div class="audit-panel-header">
+    <h2 id="audit-panel-title">Activity Log</h2>
+    <button class="modal-close" onclick="closeAuditPanel()" aria-label="Close activity log">✕</button>
+  </div>
+  <div class="audit-filter-bar" role="group" aria-label="Filter activity">
+    <button class="filter-chip active" data-filter="all"         onclick="setAuditFilter('all')">All</button>
+    <button class="filter-chip"        data-filter="step_completed" onclick="setAuditFilter('step_completed')">Completions</button>
+    <button class="filter-chip"        data-filter="gate_overridden" onclick="setAuditFilter('gate_overridden')">Overrides</button>
+    <button class="filter-chip"        data-filter="cr_created"   onclick="setAuditFilter('cr_created')">CR Created</button>
+  </div>
+  <div class="audit-panel-body" id="audit-panel-body">
+    <!-- populated by JS -->
+  </div>
+</aside>
+
 <!-- ─── Script ────────────────────────────────────────────────────────────── -->
 <script>
 'use strict';
@@ -1860,10 +2102,12 @@ const LIFECYCLE_TEMPLATE = [
 /* ── State ───────────────────────────────────────────────────────────── */
 let teamMembers  = [];   // { id, name, email, role }
 let crs          = [];   // populated in later tasks
+let auditLog     = [];   // { id, action, cr_number, actor, details, timestamp }
 let currentView  = 'pm';
 let currentUser  = '';
 let dbAvailable  = false;
 let expandedCRs  = new Set();
+let _auditFilter = 'all'; // current filter for global panel
 
 /* ── DB helpers ──────────────────────────────────────────────────────── */
 async function dbGet(collection, docId) {
@@ -1917,6 +2161,9 @@ async function boot() {
 
   // Load CRs from DB
   await loadCRs();
+
+  // Load audit log from DB
+  await loadAuditLog();
 
   // Apply view — also calls renderCRTable or renderDevView as needed
   setView(currentView);
@@ -1976,6 +2223,24 @@ async function loadCRs() {
       crs.push({ crNumber, ...crDoc, steps });
     }
   } catch {}
+}
+
+/* ── Audit log loading ───────────────────────────────────────────────── */
+async function loadAuditLog() {
+  auditLog = [];
+  if (!dbAvailable) return;
+  try {
+    const rows = await dbList('audit');
+    if (!Array.isArray(rows)) return;
+    for (const row of rows) {
+      let entry, entryId;
+      if (row.data) { entry = row.data; entryId = row.id; }
+      else { const { id, ...rest } = row; entry = rest; entryId = id; }
+      auditLog.push({ id: entryId, ...entry });
+    }
+    // Sort newest first
+    auditLog.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  } catch (e) { console.warn('Could not load audit log', e); }
 }
 
 async function addTeamMember() {
@@ -2130,6 +2395,9 @@ function setView(v) {
   document.getElementById('pm-content').hidden  = !isPm;
   document.getElementById('btn-add-cr').hidden  = !isPm;
   document.getElementById('btn-manage-team').hidden = !isPm;
+  document.getElementById('btn-activity').hidden = !isPm;
+  // Close audit panel when switching away from PM view
+  if (!isPm && !document.getElementById('audit-panel').hidden) closeAuditPanel();
 
   // Dev-only element
   document.getElementById('dev-view').hidden = isPm;
@@ -2640,6 +2908,9 @@ function buildDetailInner(cr) {
     `;
   }).join('');
 
+  // Activity log section (reads from in-memory auditLog)
+  const activitySection = buildPerCRAuditSection(crId);
+
   return `
     <div class="cr-detail">
       ${header}
@@ -2650,8 +2921,70 @@ function buildDetailInner(cr) {
       <div class="step-checklist">
         ${stepRows}
       </div>
+      ${activitySection}
     </div>
   `;
+}
+
+/* ── Per-CR activity log section ─────────────────────────────────────── */
+function buildPerCRAuditSection(crId) {
+  const sectionId = `activity-section-${escAttr(crId)}`;
+  const bodyId    = `activity-body-${escAttr(crId)}`;
+
+  // Filter entries for this CR (already sorted newest-first in auditLog)
+  const entries = auditLog.filter(e => e.cr_number === crId);
+
+  let entriesHtml;
+  if (!dbAvailable) {
+    entriesHtml = `<div class="activity-loading">Activity log requires database connection.</div>`;
+  } else if (entries.length === 0) {
+    entriesHtml = `<div class="activity-loading">No activity recorded yet.</div>`;
+  } else {
+    entriesHtml = entries.map(e => {
+      const lineClass = e.action === 'gate_overridden' ? 'override'
+                      : e.action === 'step_skipped'    ? 'skipped'
+                      : '';
+      const actionLabel = formatAuditAction(e);
+      const detailsHtml = (e.action === 'gate_overridden' && e.details)
+        ? `<div class="activity-entry-details">${escHtml(e.details.replace(/^.*Reason:\s*/i, ''))}</div>`
+        : '';
+
+      return `
+        <div class="activity-entry">
+          <div class="activity-entry-meta">${escHtml(formatAuditTimestamp(e.timestamp))}</div>
+          <div class="activity-entry-line${lineClass ? ' ' + lineClass : ''}">
+            <span class="activity-entry-actor">${escHtml(e.actor || '—')}</span>
+            <span class="activity-entry-action"> · ${escHtml(actionLabel)}</span>
+            ${detailsHtml}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  return `
+    <div class="activity-section" id="${sectionId}">
+      <button class="activity-toggle"
+        onclick="toggleActivitySection('${escAttr(sectionId)}')"
+        aria-expanded="false"
+        aria-controls="${bodyId}">
+        <span class="activity-chevron" aria-hidden="true">›</span>
+        Activity Log
+        <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted);">(${entries.length})</span>
+      </button>
+      <div class="activity-body" id="${bodyId}" role="log" aria-live="polite">
+        ${entriesHtml}
+      </div>
+    </div>
+  `;
+}
+
+function toggleActivitySection(sectionId) {
+  const section = document.getElementById(sectionId);
+  if (!section) return;
+  const isOpen = section.classList.toggle('open');
+  const btn = section.querySelector('.activity-toggle');
+  if (btn) btn.setAttribute('aria-expanded', String(isOpen));
 }
 
 function buildStepRow(cr, t, currentStepNum) {
@@ -2936,15 +3269,17 @@ async function saveCR() {
     }
 
     // 3. Audit log
-    if (dbAvailable) {
+    {
       const auditId = `${Date.now()}_${crNumber}`;
-      await dbSet('audit', auditId, {
+      const auditEntry = {
         action: 'cr_created',
         cr_number: crNumber,
         actor: currentUser,
         details: 'CR created',
         timestamp: new Date().toISOString()
-      });
+      };
+      if (dbAvailable) await dbSet('audit', auditId, auditEntry);
+      auditLog.unshift({ id: auditId, ...auditEntry });
     }
 
     // 4. Add to in-memory array
@@ -3026,6 +3361,7 @@ async function cancelCR(crNumber) {
     timestamp: new Date().toISOString()
   };
   try { await window.claude?.db?.set('audit', auditId, auditEntry); } catch (e) { console.warn('Audit write failed', e); }
+  auditLog.unshift({ id: auditId, ...auditEntry });
 
   expandedCRs.delete(crNumber);
   renderAll();
@@ -3090,6 +3426,7 @@ async function completeStep(crNumber, stepNum) {
     timestamp: new Date().toISOString()
   };
   try { await window.claude?.db?.set('audit', auditId, auditEntry); } catch (e) { console.warn('Audit write failed', e); }
+  auditLog.unshift({ id: auditId, ...auditEntry });
 
   // 6. Re-evaluate locked steps
   await reevaluateLocks(cr);
@@ -3150,6 +3487,7 @@ async function skipStep(crNumber, stepNum) {
     timestamp: new Date().toISOString()
   };
   try { await window.claude?.db?.set('audit', auditId, auditEntry); } catch (e) { console.warn('Audit write failed', e); }
+  auditLog.unshift({ id: auditId, ...auditEntry });
 
   await reevaluateLocks(cr);
   renderAll();
@@ -3292,6 +3630,7 @@ async function confirmGateOverride() {
     timestamp: new Date().toISOString()
   };
   try { await window.claude?.db?.set('audit', auditId, auditEntry); } catch (e) { console.warn('Audit write failed', e); }
+  auditLog.unshift({ id: auditId, ...auditEntry });
 
   // Close dialog
   document.getElementById('gate-modal').hidden = true;
@@ -3301,12 +3640,105 @@ async function confirmGateOverride() {
   renderAll();
 }
 
+/* ── Audit formatting helpers ────────────────────────────────────────── */
+function formatAuditTimestamp(ts) {
+  try {
+    const d = new Date(ts);
+    return d.toLocaleString('en-US', {
+      month: 'short', day: 'numeric',
+      hour: 'numeric', minute: '2-digit', hour12: true
+    });
+  } catch { return '—'; }
+}
+
+function formatAuditAction(entry) {
+  switch (entry.action) {
+    case 'cr_created':    return 'CR created';
+    case 'cr_cancelled':  return 'CR cancelled';
+    case 'step_completed':
+      // Extract "Completed step N: <name>" from details, fall back to details
+      return entry.details || 'Step completed';
+    case 'step_skipped':
+      return entry.details || 'Step skipped';
+    case 'gate_overridden':
+      // Show "⚠ Override Gate on Step N: <name>"
+      return '⚠ Override: ' + (entry.details ? entry.details.split('. Reason:')[0].replace(/^PM override for /i, '') : 'Gate overridden');
+    default:
+      return entry.action || '—';
+  }
+}
+
+/* ── Global audit panel ──────────────────────────────────────────────── */
+function openAuditPanel() {
+  _auditFilter = 'all';
+  // Reset chips
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.filter === 'all');
+  });
+  renderAuditPanel();
+  document.getElementById('audit-scrim').hidden = false;
+  document.getElementById('audit-panel').hidden = false;
+}
+
+function closeAuditPanel() {
+  document.getElementById('audit-scrim').hidden = true;
+  document.getElementById('audit-panel').hidden = true;
+}
+
+function setAuditFilter(filter) {
+  _auditFilter = filter;
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.filter === filter);
+  });
+  renderAuditPanel();
+}
+
+function renderAuditPanel() {
+  const body = document.getElementById('audit-panel-body');
+
+  // Take last 50 entries, sorted newest-first (auditLog is already sorted)
+  let entries = auditLog.slice(0, 50);
+
+  // Apply filter
+  if (_auditFilter !== 'all') {
+    entries = entries.filter(e => e.action === _auditFilter);
+  }
+
+  if (entries.length === 0) {
+    body.innerHTML = `<div class="audit-empty">${_auditFilter === 'all' ? 'No activity recorded yet.' : 'No entries match this filter.'}</div>`;
+    return;
+  }
+
+  body.innerHTML = entries.map(e => {
+    const lineClass = e.action === 'gate_overridden' ? 'override'
+                    : e.action === 'step_skipped'    ? 'skipped'
+                    : '';
+    const actionLabel  = formatAuditAction(e);
+    const detailsHtml  = (e.action === 'gate_overridden' && e.details)
+      ? `<div class="activity-entry-details">${escHtml(e.details.replace(/^.*Reason:\s*/i, ''))}</div>`
+      : '';
+
+    return `
+      <div class="audit-global-entry">
+        <div class="audit-global-cr">${escHtml(e.cr_number || '—')}</div>
+        <div class="audit-global-content${lineClass ? ' ' + lineClass : ''}">
+          <span class="activity-entry-actor">${escHtml(e.actor || '—')}</span>
+          <span class="activity-entry-action"> · ${escHtml(actionLabel)}</span>
+          ${detailsHtml}
+        </div>
+        <div class="audit-global-time">${escHtml(formatAuditTimestamp(e.timestamp))}</div>
+      </div>
+    `;
+  }).join('');
+}
+
 /* ── Keyboard: close modals on Escape ────────────────────────────────── */
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (!document.getElementById('team-modal').hidden)        closeTeamModal();
   if (!document.getElementById('user-select-modal').hidden) closeUserSelect();
   if (!document.getElementById('add-cr-modal').hidden)      closeAddCRModal();
+  if (!document.getElementById('audit-panel').hidden)       closeAuditPanel();
 });
 
 /* ── Click outside modal to close ───────────────────────────────────── */
