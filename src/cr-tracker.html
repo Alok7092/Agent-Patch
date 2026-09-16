@@ -3539,6 +3539,7 @@ function showCompletionDialog(crNumber, stepNum, hasSkippedEarlier) {
 /* ── Gate blocked dialog ─────────────────────────────────────────────── */
 // State for pending override
 let _gateOverridePending = null; // { crNumber, stepNum }
+let _gateModalCleanup = null;   // cleanup function for gate modal listeners
 
 function showGateBlockedDialog(crNumber, stepNum, unmetNames) {
   const modal    = document.getElementById('gate-modal');
@@ -3566,22 +3567,26 @@ function showGateBlockedDialog(crNumber, stepNum, unmetNames) {
 
   modal.hidden = false;
 
-  function close() {
+  function cleanup() {
     modal.hidden = true;
     closeBtn.removeEventListener('click', close);
     xBtn.removeEventListener('click', close);
     modal.removeEventListener('click', onScrim);
     document.removeEventListener('keydown', onKey);
     _gateOverridePending = null;
+    _gateModalCleanup = null;
   }
 
-  function onScrim(e) { if (e.target === modal) close(); }
-  function onKey(e)   { if (e.key === 'Escape') close(); }
+  function close() { cleanup(); }
+  function onScrim(e) { if (e.target === modal) cleanup(); }
+  function onKey(e)   { if (e.key === 'Escape') cleanup(); }
 
   closeBtn.addEventListener('click', close);
   xBtn.addEventListener('click', close);
   modal.addEventListener('click', onScrim);
   document.addEventListener('keydown', onKey);
+
+  _gateModalCleanup = cleanup;
 }
 
 async function confirmGateOverride() {
@@ -3632,9 +3637,9 @@ async function confirmGateOverride() {
   try { await window.claude?.db?.set('audit', auditId, auditEntry); } catch (e) { console.warn('Audit write failed', e); }
   auditLog.unshift({ id: auditId, ...auditEntry });
 
-  // Close dialog
-  document.getElementById('gate-modal').hidden = true;
-  _gateOverridePending = null;
+  // Close dialog and clean up listeners
+  if (_gateModalCleanup) _gateModalCleanup();
+  else { document.getElementById('gate-modal').hidden = true; _gateOverridePending = null; }
 
   await reevaluateLocks(cr);
   renderAll();
