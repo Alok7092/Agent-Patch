@@ -508,7 +508,7 @@ td:last-child  { padding-right: 16px; }
   border-bottom: 1px solid var(--border);
 }
 .detail-inner {
-  padding: 16px 16px 20px;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -519,6 +519,13 @@ td:last-child  { padding-right: 16px; }
 .detail-row[data-phase="Test"]       .detail-inner { border-left-color: var(--phase-test); }
 .detail-row[data-phase="Go-live"]    .detail-inner { border-left-color: var(--phase-golive); }
 .detail-row[data-phase="Validation"] .detail-inner { border-left-color: var(--phase-validation); }
+
+/* When using .cr-detail as the inner container */
+.detail-row[data-phase="Scope"]      .cr-detail { border-left: 3px solid var(--phase-scope); }
+.detail-row[data-phase="Build"]      .cr-detail { border-left: 3px solid var(--phase-build); }
+.detail-row[data-phase="Test"]       .cr-detail { border-left: 3px solid var(--phase-test); }
+.detail-row[data-phase="Go-live"]    .cr-detail { border-left: 3px solid var(--phase-golive); }
+.detail-row[data-phase="Validation"] .cr-detail { border-left: 3px solid var(--phase-validation); }
 
 /* Lifecycle progress bar inside detail */
 .lifecycle-bar {
@@ -870,6 +877,355 @@ td:last-child  { padding-right: 16px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
+
+/* ─── CR Detail panel ───────────────────────────────────────────────────── */
+.cr-detail {
+  padding: 16px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.cr-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 0 14px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.cr-detail-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cr-detail-num {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.01em;
+}
+
+.cr-detail-desc {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cr-detail-fields {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.cr-detail-fields strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--status-blocked);
+  border: 1px solid rgba(239,68,68,0.35);
+  flex-shrink: 0;
+}
+.btn-danger:hover:not(:disabled) {
+  background: rgba(239,68,68,0.08);
+  border-color: var(--status-blocked);
+}
+
+/* ─── Phase group ───────────────────────────────────────────────────────── */
+.phase-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 4px;
+}
+
+.phase-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 2px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.phase-header[data-phase="Scope"]      { background: rgba(99,102,241,0.10); color: var(--phase-scope); }
+.phase-header[data-phase="Build"]      { background: rgba(139,92,246,0.10); color: var(--phase-build); }
+.phase-header[data-phase="Test"]       { background: rgba(245,158,11,0.10); color: var(--phase-test); }
+.phase-header[data-phase="Go-live"]    { background: rgba(249,115,22,0.10); color: var(--phase-golive); }
+.phase-header[data-phase="Validation"] { background: rgba(16,185,129,0.10); color: var(--phase-validation); }
+
+/* ─── Step row ──────────────────────────────────────────────────────────── */
+.step-row {
+  display: grid;
+  grid-template-columns: 28px 1fr 140px 110px 120px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px 7px 8px;
+  border-radius: var(--radius-sm);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8125rem;
+  transition: background 0.1s;
+}
+
+.step-row:last-child { border-bottom: none; }
+.step-row:hover { background: var(--row-hover); }
+
+/* Status icons */
+.step-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.step-icon-completed  { color: var(--status-ok); }
+.step-icon-inprogress { color: var(--accent); }
+.step-icon-pending    { color: var(--text-muted); }
+.step-icon-locked     { color: var(--status-locked); }
+.step-icon-skipped    { color: var(--status-risk); }
+
+/* Step name cell */
+.step-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.step-num {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  min-width: 32px;
+}
+
+.step-label-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.step-label-text.muted { color: var(--text-muted); font-weight: 400; }
+
+/* Step owner column */
+.step-owner {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Step date column */
+.step-date {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Step action column */
+.step-action {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.btn-complete {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+.btn-complete:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.btn-complete:focus-visible { outline: 2px solid var(--focus-ring); }
+.btn-complete:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-skip {
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: 4px 6px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  border-radius: var(--radius-sm);
+  transition: color 0.12s;
+}
+.btn-skip:hover { color: var(--status-risk); }
+.btn-skip:focus-visible { outline: 2px solid var(--focus-ring); }
+
+/* Lock tooltip trigger */
+.lock-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  cursor: default;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+/* ─── Hint tooltip ──────────────────────────────────────────────────────── */
+.hint-trigger {
+  position: relative;
+  cursor: help;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 1px 2px;
+  border-radius: 3px;
+}
+.hint-trigger:hover,
+.hint-trigger:focus { color: var(--accent); outline: none; }
+
+.hint-trigger:hover .hint-tooltip,
+.hint-trigger:focus .hint-tooltip { display: block; }
+
+.hint-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: var(--surface-raised);
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.4;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  white-space: normal;
+  width: 220px;
+  z-index: 50;
+  box-shadow: var(--shadow-modal);
+  pointer-events: none;
+}
+
+/* Prerequisites tooltip on lock icon */
+.lock-trigger .hint-tooltip {
+  bottom: calc(100% + 6px);
+  left: auto;
+  right: 0;
+  transform: none;
+  width: 240px;
+}
+.lock-trigger:hover .hint-tooltip,
+.lock-trigger:focus .hint-tooltip { display: block; }
+
+/* ─── Completion / gate modal additions ─────────────────────────────────── */
+.modal-wide {
+  max-width: 520px;
+}
+
+.gate-unmet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: rgba(239,68,68,0.06);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: var(--radius-sm);
+  margin-top: 4px;
+}
+
+.gate-unmet-item {
+  font-size: 0.8125rem;
+  color: var(--text);
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.gate-unmet-item::before {
+  content: "⛔";
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  margin-top: 1px;
+}
+
+textarea.field-textarea {
+  appearance: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.12s, box-shadow 0.12s;
+  width: 100%;
+  resize: vertical;
+  min-height: 72px;
+}
+textarea.field-textarea::placeholder { color: var(--text-muted); opacity: 1; }
+textarea.field-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.modal-msg {
+  font-size: 0.875rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.modal-step-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+@media (max-width: 560px) {
+  .step-row {
+    grid-template-columns: 24px 1fr 100px;
+  }
+  .step-owner, .step-date { display: none; }
+}
 </style>
 
 <!-- ─── Markup ─────────────────────────────────────────────────────────── -->
@@ -1076,6 +1432,60 @@ td:last-child  { padding-right: 16px; }
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeAddCRModal()">Cancel</button>
       <button class="btn btn-primary" id="btn-create-cr" onclick="saveCR()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Step completion modal ──────────────────────────────────────────────── -->
+<div class="modal-scrim" id="completion-modal" hidden role="dialog" aria-modal="true" aria-labelledby="completion-modal-title">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2 id="completion-modal-title">Mark Step Complete</h2>
+      <button class="modal-close" id="completion-modal-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-step-name" id="completion-step-name">—</div>
+      <div id="completion-skip-warning" style="font-size:0.8125rem; color:var(--status-risk); padding:6px 10px; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.25); border-radius:var(--radius-sm);" hidden>
+        ⚠ Earlier steps in this phase are incomplete. This will be marked as completed out of order.
+      </div>
+      <div class="field">
+        <label for="completion-comment">Comment <span style="font-weight:400; color:var(--text-muted)">(optional)</span></label>
+        <textarea class="field-textarea" id="completion-comment" placeholder="Add any notes about this step…" rows="3"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="completion-cancel-btn">Cancel</button>
+      <button class="btn btn-primary" id="completion-confirm-btn">Mark Complete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Gate blocked modal ──────────────────────────────────────────────────── -->
+<div class="modal-scrim" id="gate-modal" hidden role="dialog" aria-modal="true" aria-labelledby="gate-modal-title">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2 id="gate-modal-title">Step Locked</h2>
+      <button class="modal-close" id="gate-modal-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-msg">This step requires the following prerequisites to be completed:</p>
+      <div class="gate-unmet-list" id="gate-unmet-list">
+        <!-- populated dynamically -->
+      </div>
+      <!-- PM override section (hidden for non-PM users) -->
+      <div id="gate-override-section" hidden>
+        <div style="font-size:0.8125rem; font-weight:600; color:var(--text); margin-top:4px;">PM Override</div>
+        <p style="font-size:0.8125rem; color:var(--text-muted); margin-top:2px;">As a PM you can override this gate. Provide a reason (required, min 10 characters):</p>
+        <div class="field" style="margin-top:8px;">
+          <label for="gate-override-reason">Override Reason</label>
+          <textarea class="field-textarea" id="gate-override-reason" placeholder="Explain why this gate is being overridden…" rows="3"></textarea>
+        </div>
+        <div id="gate-override-error" style="font-size:0.75rem; color:var(--status-blocked); margin-top:4px;" hidden></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="gate-close-btn">Close</button>
+      <button class="btn btn-danger btn" id="gate-override-btn" hidden onclick="confirmGateOverride()">Override Gate</button>
     </div>
   </div>
 </div>
@@ -1527,20 +1937,24 @@ function renderCRRow(cr, info, tbody) {
 
   const td = document.createElement('td');
   td.colSpan = 9;
-  td.innerHTML = buildDetailInner(cr, template, phase);
+  td.innerHTML = buildDetailInner(cr);
   dr.appendChild(td);
   tbody.appendChild(dr);
 }
 
-function buildDetailInner(cr, step, phase) {
-  // Determine current step number from steps data
-  let currentStepNum = 1;
+function buildDetailInner(cr) {
+  const crId = cr.crNumber;
+
+  // Determine current (first non-completed) step number
+  let currentStepNum = 25; // sentinel: all done
   for (const t of LIFECYCLE_TEMPLATE) {
     const docId = `step_${String(t.step).padStart(2, '0')}`;
     const sd = cr.steps && cr.steps[docId];
-    if (!sd || sd.status !== 'completed') { currentStepNum = t.step; break; }
+    const st = sd ? sd.status : 'pending';
+    if (st !== 'completed') { currentStepNum = t.step; break; }
   }
 
+  // Progress bar
   const segs = LIFECYCLE_TEMPLATE.map(s => {
     let cls = 'lifecycle-seg';
     if (s.step < currentStepNum) cls += ' done';
@@ -1548,38 +1962,169 @@ function buildDetailInner(cr, step, phase) {
     return `<div class="${cls}" data-phase="${escAttr(s.phase)}" title="Step ${s.step}: ${escAttr(s.name)}"></div>`;
   }).join('');
 
-  const phases = ['Scope','Build','Test','Go-live','Validation'];
   const phaseVars = { Scope: '--phase-scope', Build: '--phase-build', Test: '--phase-test', 'Go-live': '--phase-golive', Validation: '--phase-validation' };
-  const legend = phases.map(p => `
+  const legend = Object.keys(phaseVars).map(p => `
     <div class="lifecycle-legend-item">
       <div class="legend-swatch" style="background:var(${phaseVars[p]})"></div>
       ${escHtml(p)}
     </div>
   `).join('');
 
-  const prereqText = step.prerequisites.length
-    ? `Prerequisites: Steps ${step.prerequisites.join(', ')}`
-    : '';
-
-  return `
-    <div class="detail-inner">
-      <div>
-        <div class="lifecycle-bar" role="progressbar" aria-valuenow="${step.step}" aria-valuemin="1" aria-valuemax="24">${segs}</div>
-        <div class="lifecycle-legend" style="margin-top:6px;">${legend}</div>
-      </div>
-      <div class="step-info">
-        <div class="step-label">Step ${step.step} of 24 · ${escHtml(step.phase)}</div>
-        <div class="step-name">${escHtml(step.name)}</div>
-        ${step.hint ? `<div class="step-hint">${escHtml(step.hint)}</div>` : ''}
-        <div class="step-meta">
-          <span>CR Status: <strong>${escHtml(step.crStatus)}</strong></span>
-          <span>CD Status: <strong>${escHtml(step.cdStatus)}</strong></span>
-          <span>Owner Role: <strong>${escHtml(step.ownerRole)}</strong></span>
-          ${prereqText ? `<span>${escHtml(prereqText)}</span>` : ''}
-          ${step.hardGate ? `<span class="gate-badge">⛔ Hard Gate</span>` : ''}
-          ${step.optional ? `<span style="color:var(--text-muted); font-size:0.75rem;">(optional)</span>` : ''}
+  // CR detail header
+  const header = `
+    <div class="cr-detail-header">
+      <div class="cr-detail-meta">
+        <div class="cr-detail-num mono">${escHtml(crId)}</div>
+        <div class="cr-detail-desc">${escHtml(cr.description || 'Untitled CR')}</div>
+        <div class="cr-detail-fields">
+          <span>Developer: <strong>${escHtml(cr.developer || '—')}</strong></span>
+          <span>Change Owner: <strong>${escHtml(cr.change_owner || '—')}</strong></span>
+          <span>Target Release: <strong>${escHtml(cr.target_release_date || '—')}</strong></span>
         </div>
       </div>
+      <button class="btn btn-danger btn-ghost"
+        onclick="cancelCR('${escAttr(crId)}')"
+        style="font-size:0.8125rem; padding:5px 12px; align-self:flex-start;">
+        Cancel CR
+      </button>
+    </div>
+  `;
+
+  // Group steps by phase
+  const phaseOrder = ['Scope', 'Build', 'Test', 'Go-live', 'Validation'];
+  const groups = phaseOrder.map(phase => ({
+    phase,
+    steps: LIFECYCLE_TEMPLATE.filter(t => t.phase === phase)
+  }));
+
+  const stepRows = groups.map(({ phase, steps }) => {
+    const stepHtml = steps.map(t => buildStepRow(cr, t, currentStepNum)).join('');
+    return `
+      <div class="phase-group">
+        <div class="phase-header" data-phase="${escAttr(phase)}">${escHtml(phase)}</div>
+        ${stepHtml}
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="cr-detail">
+      ${header}
+      <div>
+        <div class="lifecycle-bar" role="progressbar" aria-valuenow="${Math.min(currentStepNum, 24)}" aria-valuemin="1" aria-valuemax="24" style="margin-bottom:6px;">${segs}</div>
+        <div class="lifecycle-legend" style="margin-bottom:14px;">${legend}</div>
+      </div>
+      <div class="step-checklist">
+        ${stepRows}
+      </div>
+    </div>
+  `;
+}
+
+function buildStepRow(cr, t, currentStepNum) {
+  const crId  = cr.crNumber;
+  const docId = `step_${String(t.step).padStart(2, '0')}`;
+  const sd    = (cr.steps && cr.steps[docId]) || { status: 'pending', completed_date: null, completed_by: null };
+  const status = sd.status || 'pending';
+
+  // Determine display status
+  let icon, iconClass, labelMuted = false;
+  if (status === 'completed' || status === 'skipped_warning') {
+    if (status === 'skipped_warning') {
+      icon = '⚠';
+      iconClass = 'step-icon-skipped';
+    } else {
+      icon = '✓';
+      iconClass = 'step-icon-completed';
+    }
+  } else if (status === 'locked') {
+    icon = '🔒';
+    iconClass = 'step-icon-locked';
+    labelMuted = true;
+  } else if (t.step === currentStepNum) {
+    // In progress — first pending step
+    icon = '●';
+    iconClass = 'step-icon-inprogress';
+  } else {
+    icon = '○';
+    iconClass = 'step-icon-pending';
+    labelMuted = true;
+  }
+
+  // Hint icon
+  const hintHtml = t.hint ? `
+    <span class="hint-trigger" tabindex="0" aria-label="Hint: ${escAttr(t.hint)}">
+      ℹ
+      <span class="hint-tooltip">${escHtml(t.hint)}</span>
+    </span>
+  ` : '';
+
+  // Hard gate badge
+  const gateBadge = t.hardGate ? `<span class="gate-badge" style="font-size:0.6rem; padding:1px 5px;">Gate</span>` : '';
+
+  // Optional badge
+  const optionalBadge = t.optional ? `<span style="color:var(--text-muted); font-size:0.6875rem;">(optional)</span>` : '';
+
+  // Owner display
+  let ownerDisplay = t.ownerRole;
+  const role = t.ownerRole.toLowerCase();
+  if (role.includes('ams developer') && !role.includes('peer')) {
+    ownerDisplay = cr.developer || t.ownerRole;
+  } else if (role.includes('change owner')) {
+    ownerDisplay = cr.change_owner || t.ownerRole;
+  }
+
+  // Completion date + by
+  let dateDisplay = '';
+  if ((status === 'completed' || status === 'skipped_warning') && sd.completed_date) {
+    dateDisplay = formatDate(sd.completed_date);
+    if (sd.completed_by) dateDisplay += ` · ${sd.completed_by.split(' ')[0]}`;
+  }
+  if (sd.override_reason) {
+    dateDisplay += ' ⚑';
+  }
+
+  // Action cell
+  let actionHtml = '';
+  if (status === 'completed' || status === 'skipped_warning') {
+    actionHtml = ''; // nothing
+  } else if (status === 'locked') {
+    // Show prerequisite names
+    const prereqNames = t.prerequisites.map(p => `Step ${p}: ${escHtml(LIFECYCLE_TEMPLATE[p-1].name)}`).join('<br>');
+    actionHtml = `
+      <span class="lock-trigger" tabindex="0" aria-label="Requires: ${escAttr(t.prerequisites.map(p => `Step ${p}`).join(', '))}">
+        🔒 <span style="font-size:0.75rem;">Locked</span>
+        <span class="hint-tooltip"><strong>Requires:</strong><br>${prereqNames}</span>
+      </span>
+    `;
+  } else {
+    // Pending / in-progress — show Mark Complete
+    const skipLink = (t.step === 14 && t.optional)
+      ? `<button class="btn-skip" onclick="skipStep('${escAttr(crId)}', ${t.step})" type="button">Skip</button>`
+      : '';
+    actionHtml = `
+      <button class="btn-complete"
+        onclick="completeStep('${escAttr(crId)}', ${t.step})"
+        type="button">
+        Mark Complete
+      </button>
+      ${skipLink}
+    `;
+  }
+
+  return `
+    <div class="step-row" data-step="${t.step}" data-status="${escAttr(status)}">
+      <div class="step-icon ${iconClass}" aria-hidden="true">${icon}</div>
+      <div class="step-name-cell">
+        <span class="step-num">S${String(t.step).padStart(2,'0')}</span>
+        <span class="step-label-text${labelMuted ? ' muted' : ''}" title="${escAttr(t.name)}">${escHtml(t.name)}</span>
+        ${gateBadge}
+        ${optionalBadge}
+        ${hintHtml}
+      </div>
+      <div class="step-owner" title="${escAttr(ownerDisplay)}">${escHtml(ownerDisplay)}</div>
+      <div class="step-date">${escHtml(dateDisplay)}</div>
+      <div class="step-action">${actionHtml}</div>
     </div>
   `;
 }
@@ -1810,6 +2355,313 @@ function renderAll() {
   renderCRTable(); // also calls renderKPIs internally
   renderUserChip();
   updateAddCRButton();
+}
+
+/* ── Cancel CR ───────────────────────────────────────────────────────── */
+async function cancelCR(crNumber) {
+  if (!confirm(`Cancel CR ${crNumber}? This cannot be undone.`)) return;
+
+  const cr = crs.find(c => c.crNumber === crNumber);
+  if (!cr) return;
+
+  cr.status = 'cancelled';
+
+  try {
+    await window.claude?.db?.set('crs', crNumber, {
+      description:          cr.description,
+      developer:            cr.developer,
+      developer_email:      cr.developer_email,
+      change_owner:         cr.change_owner,
+      change_owner_email:   cr.change_owner_email,
+      target_release_date:  cr.target_release_date,
+      created_date:         cr.created_date,
+      status:               'cancelled'
+    });
+  } catch (e) { console.warn('DB write failed', e); }
+
+  // Audit
+  const auditId = `${Date.now()}_${crNumber}_cancel`;
+  const auditEntry = {
+    action: 'cr_cancelled',
+    cr_number: crNumber,
+    actor: currentUser,
+    details: `CR ${crNumber} cancelled`,
+    timestamp: new Date().toISOString()
+  };
+  try { await window.claude?.db?.set('audit', auditId, auditEntry); } catch (e) { console.warn('Audit write failed', e); }
+
+  expandedCRs.delete(crNumber);
+  renderAll();
+}
+
+/* ── Step completion ─────────────────────────────────────────────────── */
+async function completeStep(crNumber, stepNum) {
+  const template = LIFECYCLE_TEMPLATE[stepNum - 1];
+  const cr = crs.find(c => c.crNumber === crNumber);
+  if (!cr) return;
+
+  // 1. Hard gate check
+  if (template.hardGate && template.prerequisites.length > 0) {
+    const unmet = template.prerequisites.filter(p => {
+      const stepId = `step_${String(p).padStart(2, '0')}`;
+      return cr.steps[stepId]?.status !== 'completed';
+    });
+    if (unmet.length > 0) {
+      const names = unmet.map(p => `Step ${p}: ${LIFECYCLE_TEMPLATE[p-1].name}`);
+      showGateBlockedDialog(crNumber, stepNum, names);
+      return;
+    }
+  }
+
+  // 2. Soft enforcement — check if earlier non-optional steps in same phase are incomplete
+  const earlierInPhase = LIFECYCLE_TEMPLATE.filter(t =>
+    t.step < stepNum && t.phase === template.phase && !t.optional
+  );
+  const hasSkippedEarlier = earlierInPhase.some(t => {
+    const sid = `step_${String(t.step).padStart(2, '0')}`;
+    const st = cr.steps[sid]?.status;
+    return st !== 'completed' && st !== 'skipped_warning';
+  });
+
+  // 3. Show completion dialog
+  const comment = await showCompletionDialog(crNumber, stepNum, hasSkippedEarlier);
+  if (comment === null) return; // cancelled
+
+  // 4. Update step
+  const stepId = `step_${String(stepNum).padStart(2, '0')}`;
+  const stepData = {
+    status: hasSkippedEarlier ? 'skipped_warning' : 'completed',
+    completed_date: new Date().toISOString(),
+    completed_by: currentUser,
+    comment: comment || '',
+    override_reason: null
+  };
+
+  cr.steps[stepId] = stepData;
+
+  try {
+    await window.claude?.db?.set(`crs/${crNumber}/steps`, stepId, stepData);
+  } catch (e) { console.warn('DB write failed', e); }
+
+  // 5. Audit log
+  const auditId = `${Date.now()}_${crNumber}_${stepNum}`;
+  const auditEntry = {
+    action: 'step_completed',
+    cr_number: crNumber,
+    actor: currentUser,
+    details: `Completed step ${stepNum}: ${template.name}${hasSkippedEarlier ? ' (out of order)' : ''}`,
+    timestamp: new Date().toISOString()
+  };
+  try { await window.claude?.db?.set('audit', auditId, auditEntry); } catch (e) { console.warn('Audit write failed', e); }
+
+  // 6. Re-evaluate locked steps
+  await reevaluateLocks(cr);
+  renderAll();
+}
+
+/* ── Re-evaluate locked steps ────────────────────────────────────────── */
+async function reevaluateLocks(cr) {
+  for (const t of LIFECYCLE_TEMPLATE) {
+    if (!t.hardGate || t.prerequisites.length === 0) continue;
+    const stepId = `step_${String(t.step).padStart(2, '0')}`;
+    const sd = cr.steps[stepId];
+    if (!sd || sd.status !== 'locked') continue;
+
+    const allPrereqMet = t.prerequisites.every(p => {
+      const pid = `step_${String(p).padStart(2, '0')}`;
+      return cr.steps[pid]?.status === 'completed';
+    });
+
+    if (allPrereqMet) {
+      const updated = { ...sd, status: 'pending' };
+      cr.steps[stepId] = updated;
+      try {
+        await window.claude?.db?.set(`crs/${cr.crNumber}/steps`, stepId, updated);
+      } catch (e) { console.warn('DB write failed', e); }
+    }
+  }
+}
+
+/* ── Skip optional step 14 ───────────────────────────────────────────── */
+async function skipStep(crNumber, stepNum) {
+  const cr = crs.find(c => c.crNumber === crNumber);
+  if (!cr) return;
+
+  const template = LIFECYCLE_TEMPLATE[stepNum - 1];
+  const stepId   = `step_${String(stepNum).padStart(2, '0')}`;
+
+  const stepData = {
+    status: 'completed',
+    completed_date: new Date().toISOString(),
+    completed_by: currentUser,
+    comment: 'Skipped — optional step',
+    override_reason: null
+  };
+
+  cr.steps[stepId] = stepData;
+
+  try {
+    await window.claude?.db?.set(`crs/${crNumber}/steps`, stepId, stepData);
+  } catch (e) { console.warn('DB write failed', e); }
+
+  const auditId = `${Date.now()}_${crNumber}_${stepNum}_skip`;
+  const auditEntry = {
+    action: 'step_skipped',
+    cr_number: crNumber,
+    actor: currentUser,
+    details: `Skipped optional step ${stepNum}: ${template.name}`,
+    timestamp: new Date().toISOString()
+  };
+  try { await window.claude?.db?.set('audit', auditId, auditEntry); } catch (e) { console.warn('Audit write failed', e); }
+
+  await reevaluateLocks(cr);
+  renderAll();
+}
+
+/* ── Completion dialog ───────────────────────────────────────────────── */
+// Returns Promise<string|null>: string (possibly empty) = confirmed; null = cancelled
+function showCompletionDialog(crNumber, stepNum, hasSkippedEarlier) {
+  return new Promise(resolve => {
+    const modal    = document.getElementById('completion-modal');
+    const nameEl   = document.getElementById('completion-step-name');
+    const commentEl = document.getElementById('completion-comment');
+    const warnEl   = document.getElementById('completion-skip-warning');
+    const confirmBtn = document.getElementById('completion-confirm-btn');
+    const cancelBtn  = document.getElementById('completion-cancel-btn');
+    const closeBtn   = document.getElementById('completion-modal-close');
+
+    const template = LIFECYCLE_TEMPLATE[stepNum - 1];
+    nameEl.textContent    = `Step ${stepNum}: ${template.name}`;
+    commentEl.value       = '';
+    warnEl.hidden         = !hasSkippedEarlier;
+
+    modal.hidden = false;
+    commentEl.focus();
+
+    function cleanup(result) {
+      modal.hidden = true;
+      confirmBtn.removeEventListener('click', onConfirm);
+      cancelBtn.removeEventListener('click', onCancel);
+      closeBtn.removeEventListener('click', onCancel);
+      modal.removeEventListener('click', onScrimClick);
+      document.removeEventListener('keydown', onKeydown);
+      resolve(result);
+    }
+
+    function onConfirm() { cleanup(commentEl.value); }
+    function onCancel()  { cleanup(null); }
+    function onScrimClick(e) { if (e.target === modal) cleanup(null); }
+    function onKeydown(e)    { if (e.key === 'Escape') cleanup(null); }
+
+    confirmBtn.addEventListener('click', onConfirm);
+    cancelBtn.addEventListener('click', onCancel);
+    closeBtn.addEventListener('click', onCancel);
+    modal.addEventListener('click', onScrimClick);
+    document.addEventListener('keydown', onKeydown);
+  });
+}
+
+/* ── Gate blocked dialog ─────────────────────────────────────────────── */
+// State for pending override
+let _gateOverridePending = null; // { crNumber, stepNum }
+
+function showGateBlockedDialog(crNumber, stepNum, unmetNames) {
+  const modal    = document.getElementById('gate-modal');
+  const listEl   = document.getElementById('gate-unmet-list');
+  const overrideSection = document.getElementById('gate-override-section');
+  const overrideBtn     = document.getElementById('gate-override-btn');
+  const overrideReason  = document.getElementById('gate-override-reason');
+  const overrideError   = document.getElementById('gate-override-error');
+  const closeBtn  = document.getElementById('gate-close-btn');
+  const xBtn      = document.getElementById('gate-modal-close');
+
+  // Populate unmet list
+  listEl.innerHTML = unmetNames.map(n => `<div class="gate-unmet-item">${escHtml(n)}</div>`).join('');
+
+  // Show override section only for PM
+  const currentMember = teamMembers.find(m => m.name === currentUser);
+  const isPM = currentMember && currentMember.role === 'PM';
+
+  overrideSection.hidden  = !isPM;
+  overrideBtn.hidden      = !isPM;
+  overrideReason.value    = '';
+  overrideError.hidden    = true;
+
+  _gateOverridePending = { crNumber, stepNum };
+
+  modal.hidden = false;
+
+  function close() {
+    modal.hidden = true;
+    closeBtn.removeEventListener('click', close);
+    xBtn.removeEventListener('click', close);
+    modal.removeEventListener('click', onScrim);
+    document.removeEventListener('keydown', onKey);
+    _gateOverridePending = null;
+  }
+
+  function onScrim(e) { if (e.target === modal) close(); }
+  function onKey(e)   { if (e.key === 'Escape') close(); }
+
+  closeBtn.addEventListener('click', close);
+  xBtn.addEventListener('click', close);
+  modal.addEventListener('click', onScrim);
+  document.addEventListener('keydown', onKey);
+}
+
+async function confirmGateOverride() {
+  if (!_gateOverridePending) return;
+
+  const { crNumber, stepNum } = _gateOverridePending;
+  const reasonEl = document.getElementById('gate-override-reason');
+  const errorEl  = document.getElementById('gate-override-error');
+  const reason   = reasonEl.value.trim();
+
+  errorEl.hidden = true;
+  if (reason.length < 10) {
+    errorEl.textContent = 'Please provide at least 10 characters for the override reason.';
+    errorEl.hidden = false;
+    reasonEl.focus();
+    return;
+  }
+
+  const cr = crs.find(c => c.crNumber === crNumber);
+  if (!cr) return;
+
+  const template = LIFECYCLE_TEMPLATE[stepNum - 1];
+  const stepId   = `step_${String(stepNum).padStart(2, '0')}`;
+
+  const stepData = {
+    status: 'completed',
+    completed_date: new Date().toISOString(),
+    completed_by: currentUser,
+    comment: '',
+    override_reason: reason
+  };
+
+  cr.steps[stepId] = stepData;
+
+  try {
+    await window.claude?.db?.set(`crs/${crNumber}/steps`, stepId, stepData);
+  } catch (e) { console.warn('DB write failed', e); }
+
+  // Audit
+  const auditId = `${Date.now()}_${crNumber}_${stepNum}_override`;
+  const auditEntry = {
+    action: 'gate_overridden',
+    cr_number: crNumber,
+    actor: currentUser,
+    details: `PM override for step ${stepNum}: ${template.name}. Reason: ${reason}`,
+    timestamp: new Date().toISOString()
+  };
+  try { await window.claude?.db?.set('audit', auditId, auditEntry); } catch (e) { console.warn('Audit write failed', e); }
+
+  // Close dialog
+  document.getElementById('gate-modal').hidden = true;
+  _gateOverridePending = null;
+
+  await reevaluateLocks(cr);
+  renderAll();
 }
 
 /* ── Keyboard: close modals on Escape ────────────────────────────────── */
