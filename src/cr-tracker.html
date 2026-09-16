@@ -1037,6 +1037,49 @@ td:last-child  { padding-right: 16px; }
   </div>
 </div>
 
+<!-- ─── Add CR modal ──────────────────────────────────────────────────────── -->
+<div class="modal-scrim" id="add-cr-modal" hidden role="dialog" aria-modal="true" aria-labelledby="add-cr-modal-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="add-cr-modal-title">Add Change Request</h2>
+      <button class="modal-close" onclick="closeAddCRModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label for="cr-number">CR Number</label>
+        <input type="text" id="cr-number" placeholder="e.g. CHG0012345" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="cr-description">Description</label>
+        <input type="text" id="cr-description" placeholder="Brief description of the change" autocomplete="off">
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label for="cr-developer">Developer</label>
+          <select id="cr-developer">
+            <option value="">— select —</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="cr-change-owner">Change Owner</label>
+          <select id="cr-change-owner">
+            <option value="">— select —</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="cr-release-date">Target Release Date</label>
+        <input type="date" id="cr-release-date">
+      </div>
+      <div id="cr-error" style="font-size:0.75rem; color:var(--status-blocked); margin-top:-4px;" hidden></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeAddCRModal()">Cancel</button>
+      <button class="btn btn-primary" id="btn-create-cr" onclick="saveCR()">Create</button>
+    </div>
+  </div>
+</div>
+
 <!-- ─── Script ────────────────────────────────────────────────────────────── -->
 <script>
 'use strict';
@@ -1115,8 +1158,8 @@ async function boot() {
   // Load team from DB
   await loadTeam();
 
-  // Load CRs (stub for later tasks)
-  // await loadCRs();
+  // Load CRs from DB
+  await loadCRs();
 
   renderAll();
 }
@@ -1133,6 +1176,44 @@ async function loadTeam() {
         const { id, ...rest } = r;
         return { id, ...rest };
       });
+    }
+  } catch {}
+}
+
+/* ── CRs ─────────────────────────────────────────────────────────────── */
+async function loadCRs() {
+  if (!dbAvailable) return;
+  crs = [];
+  try {
+    const rows = await dbList('crs');
+    if (!Array.isArray(rows)) return;
+
+    for (const row of rows) {
+      let crDoc, crNumber;
+      if (row.data) {
+        crDoc     = row.data;
+        crNumber  = row.id;
+      } else {
+        const { id, ...rest } = row;
+        crDoc    = rest;
+        crNumber = id;
+      }
+
+      // Load steps for this CR
+      const steps = {};
+      try {
+        const stepRows = await dbList(`crs/${crNumber}/steps`);
+        if (Array.isArray(stepRows)) {
+          for (const sr of stepRows) {
+            let stepData, stepId;
+            if (sr.data) { stepData = sr.data; stepId = sr.id; }
+            else { const { id: sid, ...srest } = sr; stepData = srest; stepId = sid; }
+            steps[stepId] = stepData;
+          }
+        }
+      } catch {}
+
+      crs.push({ crNumber, ...crDoc, steps });
     }
   } catch {}
 }
@@ -1281,12 +1362,71 @@ function setView(v) {
   renderCRTable();
 }
 
-/* ── CR table (stub — no CRs yet, just empty state) ─────────────────── */
+/* ── CR status computation ───────────────────────────────────────────── */
+function computeCRInfo(cr) {
+  // Find the first non-completed step
+  let currentStepNum = 24; // default to last if all done
+  for (const template of LIFECYCLE_TEMPLATE) {
+    const docId = `step_${String(template.step).padStart(2, '0')}`;
+    const stepData = cr.steps && cr.steps[docId];
+    const stepStatus = stepData ? stepData.status : 'pending';
+    if (stepStatus !== 'completed') {
+      currentStepNum = template.step;
+      break;
+    }
+  }
+
+  const template = LIFECYCLE_TEMPLATE.find(s => s.step === currentStepNum) || LIFECYCLE_TEMPLATE[0];
+  const docId    = `step_${String(currentStepNum).padStart(2, '0')}`;
+  const stepData = cr.steps && cr.steps[docId];
+  const stepStatus = stepData ? stepData.status : 'pending';
+
+  // Determine days in current step (from previous completed step or CR creation)
+  let prevCompletedDate = cr.created_date || new Date().toISOString();
+  if (currentStepNum > 1) {
+    for (let n = currentStepNum - 1; n >= 1; n--) {
+      const prevId   = `step_${String(n).padStart(2, '0')}`;
+      const prevData = cr.steps && cr.steps[prevId];
+      if (prevData && prevData.completed_date) {
+        prevCompletedDate = prevData.completed_date;
+        break;
+      }
+    }
+  }
+  const daysInStep = Math.floor((Date.now() - new Date(prevCompletedDate).getTime()) / 86400000);
+
+  // Compute row status
+  let statusKey;
+  if (template.hardGate && stepStatus === 'locked') {
+    statusKey = 'blocked';
+  } else if (daysInStep > template.overdueThresholdDays) {
+    statusKey = 'risk';
+  } else {
+    statusKey = 'ok';
+  }
+
+  // Resolve owner name from ownerRole
+  let ownerName = template.ownerRole;
+  const role = template.ownerRole.toLowerCase();
+  if (role.includes('developer') && role.includes('ams') && !role.includes('peer')) {
+    ownerName = cr.developer || template.ownerRole;
+  } else if (role.includes('change owner')) {
+    ownerName = cr.change_owner || template.ownerRole;
+  }
+
+  return { template, stepStatus, daysInStep, statusKey, ownerName, currentStepNum };
+}
+
+/* ── CR table ────────────────────────────────────────────────────────── */
 function renderCRTable() {
   const tbody      = document.getElementById('cr-tbody');
   const emptyState = document.getElementById('empty-state');
 
   tbody.innerHTML = '';
+
+  // KPIs reflect ALL active CRs regardless of view filter
+  const allActiveInfos = crs.filter(c => c.status === 'active').map(cr => ({ cr, info: computeCRInfo(cr) }));
+  renderKPIs(allActiveInfos);
 
   const visibleCRs = getCRsForView();
 
@@ -1296,51 +1436,85 @@ function renderCRTable() {
   }
   emptyState.hidden = true;
 
-  for (const cr of visibleCRs) {
-    renderCRRow(cr, tbody);
+  // Compute info for each CR, then sort: Blocked → At Risk → On Track
+  const crInfos = visibleCRs.map(cr => ({ cr, info: computeCRInfo(cr) }));
+  const sortOrder = { blocked: 0, risk: 1, ok: 2 };
+  crInfos.sort((a, b) => (sortOrder[a.info.statusKey] ?? 3) - (sortOrder[b.info.statusKey] ?? 3));
+
+  for (const { cr, info } of crInfos) {
+    renderCRRow(cr, info, tbody);
   }
 }
 
 function getCRsForView() {
+  const activeCRs = crs.filter(c => c.status === 'active');
   if (currentView === 'dev' && currentUser) {
-    return crs.filter(cr => cr.ownerName === currentUser);
+    return activeCRs.filter(cr => cr.developer === currentUser || cr.change_owner === currentUser);
   }
-  return crs;
+  return activeCRs;
 }
 
-function renderCRRow(cr, tbody) {
-  const step    = LIFECYCLE_TEMPLATE.find(s => s.step === cr.currentStep) || LIFECYCLE_TEMPLATE[0];
-  const phase   = step.phase;
-  const daysAgo = cr.stepStarted ? Math.floor((Date.now() - cr.stepStarted) / 86400000) : 0;
-  const overdue = daysAgo > step.overdueThresholdDays;
+function renderCRRow(cr, info, tbody) {
+  const { template, daysInStep, statusKey, ownerName, currentStepNum } = info;
+  const phase   = template.phase;
+  const overdue = daysInStep > template.overdueThresholdDays;
 
-  const statusKey = cr.status || (overdue ? 'risk' : 'ok');
   const statusLabel = { ok: 'On Track', risk: 'At Risk', blocked: 'Blocked', locked: 'Locked' }[statusKey] || statusKey;
 
-  const expanded = expandedCRs.has(cr.id);
+  const crId   = cr.crNumber;
+  const expanded = expandedCRs.has(crId);
+
+  // Phase progress bar (5 phases)
+  const phases = ['Scope', 'Build', 'Test', 'Go-live', 'Validation'];
+  const phaseColors = {
+    Scope:      'var(--phase-scope)',
+    Build:      'var(--phase-build)',
+    Test:       'var(--phase-test)',
+    'Go-live':  'var(--phase-golive)',
+    Validation: 'var(--phase-validation)'
+  };
+  const currentPhaseIndex = phases.indexOf(phase);
+  const phaseBar = phases.map((p, i) => {
+    let opacity, outline;
+    if (i < currentPhaseIndex) {
+      opacity = '1'; outline = '';
+    } else if (i === currentPhaseIndex) {
+      opacity = '1'; outline = 'outline:2px solid var(--surface-raised); outline-offset:1px;';
+    } else {
+      opacity = '0.2'; outline = '';
+    }
+    return `<div style="flex:1; height:6px; border-radius:1px; background:${phaseColors[p]}; opacity:${opacity}; ${outline}" title="${escAttr(p)}"></div>`;
+  }).join('');
+
+  // Desc truncation
+  const descRaw = cr.description || 'Untitled CR';
+  const descShort = descRaw.length > 40 ? descRaw.slice(0, 38) + '…' : descRaw;
+
+  // Deadline format
+  const deadlineStr = cr.target_release_date ? formatDate(cr.target_release_date) : '—';
 
   // Main row
   const tr = document.createElement('tr');
   tr.className = 'cr-row' + (expanded ? ' expanded' : '');
-  tr.dataset.id    = cr.id;
+  tr.dataset.id    = crId;
   tr.dataset.phase = phase;
   tr.setAttribute('aria-expanded', String(expanded));
-  tr.onclick = () => toggleCRExpand(cr.id);
+  tr.onclick = () => toggleCRExpand(crId);
 
   tr.innerHTML = `
-    <td><span class="cr-num mono">${escHtml(cr.crNumber || cr.id)}</span></td>
-    <td><span class="cr-desc" title="${escAttr(cr.description || '')}">${escHtml(cr.description || 'Untitled CR')}</span></td>
-    <td><span class="phase-badge" data-phase="${escAttr(phase)}">${escHtml(phase)}</span></td>
-    <td><span class="mono" style="color:var(--text-muted); font-size:0.75rem;">${step.step} / 24</span>&nbsp;<span style="color:var(--text); font-size:0.8125rem;">${escHtml(step.name.length > 40 ? step.name.slice(0, 38) + '…' : step.name)}</span></td>
-    <td class="col-owner">${escHtml(cr.ownerName || '—')}</td>
+    <td><span class="cr-num mono">${escHtml(crId)}</span></td>
+    <td><span class="cr-desc" title="${escAttr(descRaw)}">${escHtml(descShort)}</span></td>
+    <td><div style="display:flex; gap:2px; width:60px; align-items:center;">${phaseBar}</div></td>
+    <td><span class="mono" style="color:var(--text-muted); font-size:0.75rem;">${currentStepNum}/24</span>&nbsp;<span style="color:var(--text); font-size:0.8125rem;">${escHtml(template.name.length > 40 ? template.name.slice(0, 38) + '…' : template.name)}</span></td>
+    <td class="col-owner">${escHtml(ownerName)}</td>
     <td>
       <div class="status-cell">
         <div class="status-dot ${escAttr(statusKey)}" aria-hidden="true"></div>
         ${escHtml(statusLabel)}
       </div>
     </td>
-    <td class="days-cell col-days${overdue ? ' overdue' : ''}">${daysAgo}d</td>
-    <td class="deadline-cell col-deadline">${cr.deadline ? formatDate(cr.deadline) : '—'}</td>
+    <td class="days-cell col-days${overdue ? ' overdue' : ''}">${daysInStep}d</td>
+    <td class="deadline-cell col-deadline">${escHtml(deadlineStr)}</td>
     <td><span class="expand-icon" aria-hidden="true">›</span></td>
   `;
   tbody.appendChild(tr);
@@ -1353,16 +1527,24 @@ function renderCRRow(cr, tbody) {
 
   const td = document.createElement('td');
   td.colSpan = 9;
-  td.innerHTML = buildDetailInner(cr, step, phase);
+  td.innerHTML = buildDetailInner(cr, template, phase);
   dr.appendChild(td);
   tbody.appendChild(dr);
 }
 
 function buildDetailInner(cr, step, phase) {
+  // Determine current step number from steps data
+  let currentStepNum = 1;
+  for (const t of LIFECYCLE_TEMPLATE) {
+    const docId = `step_${String(t.step).padStart(2, '0')}`;
+    const sd = cr.steps && cr.steps[docId];
+    if (!sd || sd.status !== 'completed') { currentStepNum = t.step; break; }
+  }
+
   const segs = LIFECYCLE_TEMPLATE.map(s => {
     let cls = 'lifecycle-seg';
-    if (s.step < (cr.currentStep || 1)) cls += ' done';
-    else if (s.step === (cr.currentStep || 1)) cls += ' current';
+    if (s.step < currentStepNum) cls += ' done';
+    else if (s.step === currentStepNum) cls += ' current';
     return `<div class="${cls}" data-phase="${escAttr(s.phase)}" title="Step ${s.step}: ${escAttr(s.name)}"></div>`;
   }).join('');
 
@@ -1409,11 +1591,18 @@ function toggleCRExpand(id) {
 }
 
 /* ── KPIs ────────────────────────────────────────────────────────────── */
-function renderKPIs() {
-  const total   = crs.length;
-  const ok      = crs.filter(c => (c.status || 'ok') === 'ok').length;
-  const risk    = crs.filter(c => c.status === 'risk').length;
-  const blocked = crs.filter(c => c.status === 'blocked').length;
+function renderKPIs(crInfos) {
+  // crInfos is passed from renderCRTable after computing statuses.
+  // When called directly (e.g. from renderAll before table renders), compute fresh.
+  if (!crInfos) {
+    const activeCRs = crs.filter(c => c.status === 'active');
+    crInfos = activeCRs.map(cr => ({ cr, info: computeCRInfo(cr) }));
+  }
+
+  const total   = crInfos.length;
+  const ok      = crInfos.filter(({ info }) => info.statusKey === 'ok').length;
+  const risk    = crInfos.filter(({ info }) => info.statusKey === 'risk').length;
+  const blocked = crInfos.filter(({ info }) => info.statusKey === 'blocked').length;
 
   document.getElementById('kpi-total').textContent   = total   || '—';
   document.getElementById('kpi-ok').textContent      = total ? ok      : '—';
@@ -1429,9 +1618,176 @@ function openTeamModal() {
 function closeTeamModal() {
   document.getElementById('team-modal').hidden = true;
 }
+function nextThursday() {
+  const d = new Date();
+  const day = d.getDay(); // 0=Sun … 6=Sat; 4=Thu
+  const daysAhead = (4 - day + 7) % 7 || 7; // at least 1 day ahead
+  d.setDate(d.getDate() + daysAhead);
+  return d.toISOString().slice(0, 10);
+}
+
 function openAddCRModal() {
-  // Placeholder — implemented in later tasks
-  alert('Add CR — coming in Task 2');
+  // Populate developer dropdown
+  const devSel = document.getElementById('cr-developer');
+  devSel.innerHTML = '<option value="">— select —</option>';
+  for (const m of teamMembers) {
+    if (m.role === 'Developer') {
+      const o = document.createElement('option');
+      o.value = m.name;
+      o.dataset.email = m.email;
+      o.textContent = m.name;
+      devSel.appendChild(o);
+    }
+  }
+
+  // Populate change owner dropdown
+  const ownerSel = document.getElementById('cr-change-owner');
+  ownerSel.innerHTML = '<option value="">— select —</option>';
+  for (const m of teamMembers) {
+    if (m.role === 'Change Owner') {
+      const o = document.createElement('option');
+      o.value = m.name;
+      o.dataset.email = m.email;
+      o.textContent = m.name;
+      ownerSel.appendChild(o);
+    }
+  }
+
+  // Default release date to next Thursday
+  document.getElementById('cr-release-date').value = nextThursday();
+
+  // Clear previous values and errors
+  document.getElementById('cr-number').value = '';
+  document.getElementById('cr-description').value = '';
+  document.getElementById('cr-error').hidden = true;
+
+  document.getElementById('add-cr-modal').hidden = false;
+  document.getElementById('cr-number').focus();
+}
+
+function closeAddCRModal() {
+  document.getElementById('add-cr-modal').hidden = true;
+}
+
+function showCRError(msg) {
+  const el = document.getElementById('cr-error');
+  el.textContent = msg;
+  el.hidden = false;
+}
+
+async function saveCR() {
+  const crNumber     = document.getElementById('cr-number').value.trim();
+  const description  = document.getElementById('cr-description').value.trim();
+  const devSel       = document.getElementById('cr-developer');
+  const ownerSel     = document.getElementById('cr-change-owner');
+  const releaseDate  = document.getElementById('cr-release-date').value;
+
+  document.getElementById('cr-error').hidden = true;
+
+  // Validation
+  if (!crNumber) { showCRError('CR Number is required'); return; }
+  if (crs.find(c => c.crNumber === crNumber)) { showCRError('CR Number already exists'); return; }
+  if (!description) { showCRError('Description is required'); return; }
+
+  const devOption   = devSel.options[devSel.selectedIndex];
+  const ownerOption = ownerSel.options[ownerSel.selectedIndex];
+
+  const developer       = devSel.value;
+  const developer_email = devOption ? (devOption.dataset.email || '') : '';
+  const change_owner    = ownerSel.value;
+  const change_owner_email = ownerOption ? (ownerOption.dataset.email || '') : '';
+  const created_date    = new Date().toISOString();
+
+  const crDoc = {
+    description,
+    developer,
+    developer_email,
+    change_owner,
+    change_owner_email,
+    target_release_date: releaseDate,
+    created_date,
+    status: 'active'
+  };
+
+  // Disable button during save
+  const btn = document.getElementById('btn-create-cr');
+  btn.disabled = true;
+
+  try {
+    // 1. Save CR document
+    if (dbAvailable) {
+      await dbSet('crs', crNumber, crDoc);
+    }
+
+    // 2. Create 24 step documents
+    const stepsCollection = `crs/${crNumber}/steps`;
+    const stepDocs = LIFECYCLE_TEMPLATE.map(template => {
+      const docId = `step_${String(template.step).padStart(2, '0')}`;
+      // Step 1 always starts as pending; others locked if hard gate + has prerequisites
+      const status = (template.step === 1)
+        ? 'pending'
+        : (template.hardGate && template.prerequisites.length > 0 ? 'locked' : 'pending');
+      return {
+        docId,
+        data: {
+          status,
+          completed_date: null,
+          completed_by: null,
+          comment: '',
+          override_reason: null
+        }
+      };
+    });
+
+    if (dbAvailable) {
+      // Try batch write; fall back to sequential
+      if (window.claude?.db?.batch) {
+        try {
+          const writes = stepDocs.map(s => ({ op: 'set', collection: stepsCollection, doc_id: s.docId, data: s.data }));
+          await window.claude.db.batch(writes);
+        } catch {
+          for (const s of stepDocs) {
+            await dbSet(stepsCollection, s.docId, s.data);
+          }
+        }
+      } else {
+        for (const s of stepDocs) {
+          await dbSet(stepsCollection, s.docId, s.data);
+        }
+      }
+    }
+
+    // 3. Audit log
+    if (dbAvailable) {
+      const auditId = `${Date.now()}_${crNumber}`;
+      await dbSet('audit', auditId, {
+        action: 'cr_created',
+        cr_number: crNumber,
+        actor: currentUser,
+        details: 'CR created',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // 4. Add to in-memory array
+    const steps = {};
+    for (const s of stepDocs) {
+      steps[s.docId] = s.data;
+    }
+    crs.push({
+      crNumber,
+      ...crDoc,
+      steps
+    });
+
+    // 5. Close modal and refresh
+    closeAddCRModal();
+    renderAll();
+  } catch (err) {
+    showCRError('Failed to save CR. Please try again.');
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 /* ── Escape helpers ──────────────────────────────────────────────────── */
@@ -1451,8 +1807,7 @@ function formatDate(ts) {
 
 /* ── Render all ──────────────────────────────────────────────────────── */
 function renderAll() {
-  renderKPIs();
-  renderCRTable();
+  renderCRTable(); // also calls renderKPIs internally
   renderUserChip();
   updateAddCRButton();
 }
@@ -1462,6 +1817,7 @@ document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (!document.getElementById('team-modal').hidden)        closeTeamModal();
   if (!document.getElementById('user-select-modal').hidden) closeUserSelect();
+  if (!document.getElementById('add-cr-modal').hidden)      closeAddCRModal();
 });
 
 /* ── Click outside modal to close ───────────────────────────────────── */
@@ -1470,6 +1826,9 @@ document.getElementById('team-modal').addEventListener('click', e => {
 });
 document.getElementById('user-select-modal').addEventListener('click', e => {
   if (e.target === e.currentTarget) closeUserSelect();
+});
+document.getElementById('add-cr-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeAddCRModal();
 });
 
 /* ── Init ────────────────────────────────────────────────────────────── */
