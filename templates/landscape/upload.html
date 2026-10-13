@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Upload Landscape</h1>
+<form method="post" action="/landscape/upload" enctype="multipart/form-data" class="bg-white p-6 rounded-lg shadow max-w-lg">
+    <div class="mb-4">
+        <label class="block text-sm font-medium mb-1">Spreadsheet File (.xlsx or .csv)</label>
+        <input type="file" name="file" accept=".xlsx,.csv" required class="w-full border rounded p-2">
+    </div>
+    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Upload</button>
+</form>
+{% endblock %}

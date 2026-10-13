@@ -1,0 +1,1483 @@
+diff --git a/src/cr-tracker.html b/src/cr-tracker.html
+new file mode 100644
+index 0000000..1fcc517
+--- /dev/null
++++ b/src/cr-tracker.html
+@@ -0,0 +1,1477 @@
++<title>CR Lifecycle Tracker</title>
++<link rel="preconnect" href="https://fonts.googleapis.com">
++<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
++<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
++
++<style>
++/* ─── Design tokens ─────────────────────────────────────────────────────── */
++:root {
++  --surface:        #F6F7F9;
++  --surface-raised: #FFFFFF;
++  --text:           #1A1D23;
++  --text-muted:     #6B7280;
++  --border:         #E2E5EB;
++  --accent:         #4361EE;
++  --accent-hover:   #3A56D4;
++
++  /* Phase colors — constant across themes */
++  --phase-scope:      #6366F1;
++  --phase-build:      #8B5CF6;
++  --phase-test:       #F59E0B;
++  --phase-golive:     #F97316;
++  --phase-validation: #10B981;
++
++  /* Status colors */
++  --status-ok:      #10B981;
++  --status-risk:    #F59E0B;
++  --status-blocked: #EF4444;
++  --status-locked:  #9CA3AF;
++
++  /* Semantic aliases */
++  --top-bar-bg:     var(--surface-raised);
++  --top-bar-border: var(--border);
++  --modal-scrim:    rgba(26,29,35,0.45);
++  --row-hover:      rgba(67,97,238,0.04);
++  --row-expanded:   rgba(67,97,238,0.06);
++  --focus-ring:     rgba(67,97,238,0.35);
++  --shadow-card:    0 1px 3px rgba(0,0,0,0.08), 0 1px 1px rgba(0,0,0,0.04);
++  --shadow-modal:   0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08);
++  --radius-sm: 4px;
++  --radius-md: 8px;
++  --radius-lg: 12px;
++}
++
++@media (prefers-color-scheme: dark) {
++  :root:not([data-theme="light"]) {
++    --surface:        #111318;
++    --surface-raised: #1A1D25;
++    --text:           #E8EAED;
++    --text-muted:     #9CA3AF;
++    --border:         #2D3139;
++    --modal-scrim:    rgba(0,0,0,0.6);
++    --row-hover:      rgba(67,97,238,0.07);
++    --row-expanded:   rgba(67,97,238,0.10);
++    --shadow-card:    0 1px 4px rgba(0,0,0,0.3);
++    --shadow-modal:   0 8px 32px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
++  }
++}
++
++:root[data-theme="dark"] {
++  --surface:        #111318;
++  --surface-raised: #1A1D25;
++  --text:           #E8EAED;
++  --text-muted:     #9CA3AF;
++  --border:         #2D3139;
++  --modal-scrim:    rgba(0,0,0,0.6);
++  --row-hover:      rgba(67,97,238,0.07);
++  --row-expanded:   rgba(67,97,238,0.10);
++  --shadow-card:    0 1px 4px rgba(0,0,0,0.3);
++  --shadow-modal:   0 8px 32px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
++}
++
++/* ─── Reset & base ──────────────────────────────────────────────────────── */
++*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
++
++html { font-size: 14px; -webkit-text-size-adjust: 100%; }
++
++body {
++  font-family: 'Inter', system-ui, -apple-system, sans-serif;
++  background: var(--surface);
++  color: var(--text);
++  line-height: 1.5;
++  padding-inline: 24px;
++  padding-block: 0 48px;
++  min-height: 100vh;
++}
++
++[hidden] { display: none !important; }
++
++/* ─── Typography scale ──────────────────────────────────────────────────── */
++.mono {
++  font-family: 'JetBrains Mono', ui-monospace, monospace;
++  font-size: 0.875em;
++  letter-spacing: 0.01em;
++}
++
++h1, h2, h3 { text-wrap: balance; }
++
++/* ─── Top bar ───────────────────────────────────────────────────────────── */
++.top-bar {
++  position: sticky;
++  top: 0;
++  z-index: 100;
++  background: var(--top-bar-bg);
++  border-bottom: 1px solid var(--top-bar-border);
++  margin-inline: -24px;
++  padding-inline: 24px;
++  padding-block: 0;
++  display: flex;
++  align-items: center;
++  gap: 12px;
++  height: 52px;
++  backdrop-filter: blur(8px);
++  -webkit-backdrop-filter: blur(8px);
++}
++
++.top-bar-brand {
++  display: flex;
++  align-items: center;
++  gap: 8px;
++  flex: 1;
++  min-width: 0;
++}
++
++.top-bar-brand h1 {
++  font-size: 0.9375rem;
++  font-weight: 600;
++  letter-spacing: -0.01em;
++  white-space: nowrap;
++  overflow: hidden;
++  text-overflow: ellipsis;
++}
++
++.top-bar-brand .brand-dot {
++  width: 8px;
++  height: 8px;
++  border-radius: 50%;
++  background: var(--accent);
++  flex-shrink: 0;
++}
++
++.top-bar-controls {
++  display: flex;
++  align-items: center;
++  gap: 8px;
++  flex-shrink: 0;
++}
++
++/* ─── View toggle ───────────────────────────────────────────────────────── */
++.view-toggle {
++  display: flex;
++  background: var(--surface);
++  border: 1px solid var(--border);
++  border-radius: var(--radius-sm);
++  padding: 2px;
++  gap: 2px;
++}
++
++.view-toggle-btn {
++  appearance: none;
++  border: none;
++  background: transparent;
++  cursor: pointer;
++  font-family: inherit;
++  font-size: 0.8125rem;
++  font-weight: 500;
++  color: var(--text-muted);
++  padding: 4px 10px;
++  border-radius: 3px;
++  transition: background 0.12s, color 0.12s;
++  white-space: nowrap;
++}
++
++.view-toggle-btn:focus-visible {
++  outline: 2px solid var(--focus-ring);
++  outline-offset: 1px;
++}
++
++.view-toggle-btn.active {
++  background: var(--surface-raised);
++  color: var(--text);
++  box-shadow: var(--shadow-card);
++}
++
++/* ─── Buttons ───────────────────────────────────────────────────────────── */
++.btn {
++  appearance: none;
++  border: none;
++  cursor: pointer;
++  font-family: inherit;
++  font-size: 0.8125rem;
++  font-weight: 500;
++  padding: 6px 14px;
++  border-radius: var(--radius-sm);
++  transition: background 0.12s, opacity 0.12s;
++  line-height: 1;
++  white-space: nowrap;
++  display: inline-flex;
++  align-items: center;
++  gap: 6px;
++}
++
++.btn:focus-visible {
++  outline: 2px solid var(--focus-ring);
++  outline-offset: 2px;
++}
++
++.btn-primary {
++  background: var(--accent);
++  color: #fff;
++}
++.btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
++.btn-primary:disabled {
++  opacity: 0.42;
++  cursor: not-allowed;
++}
++
++.btn-ghost {
++  background: transparent;
++  color: var(--text-muted);
++  border: 1px solid var(--border);
++}
++.btn-ghost:hover:not(:disabled) {
++  background: var(--surface);
++  color: var(--text);
++  border-color: var(--text-muted);
++}
++
++.btn-icon {
++  font-size: 1rem;
++  line-height: 1;
++  padding: 0;
++  width: 20px;
++  height: 20px;
++  justify-content: center;
++  background: transparent;
++  color: var(--text-muted);
++  border: none;
++  border-radius: var(--radius-sm);
++  cursor: pointer;
++  font-family: inherit;
++  display: inline-flex;
++  align-items: center;
++  transition: color 0.1s, background 0.1s;
++}
++.btn-icon:hover { color: var(--status-blocked); background: rgba(239,68,68,0.08); }
++.btn-icon:focus-visible { outline: 2px solid var(--focus-ring); }
++
++/* ─── Content wrapper ───────────────────────────────────────────────────── */
++.content {
++  max-width: 1200px;
++  margin-inline: auto;
++  padding-top: 24px;
++  display: flex;
++  flex-direction: column;
++  gap: 20px;
++}
++
++/* ─── DB banner ─────────────────────────────────────────────────────────── */
++.banner {
++  background: rgba(245,158,11,0.1);
++  border: 1px solid rgba(245,158,11,0.3);
++  border-radius: var(--radius-md);
++  padding: 10px 16px;
++  font-size: 0.8125rem;
++  color: var(--text);
++  display: flex;
++  align-items: center;
++  gap: 8px;
++}
++.banner-icon { font-size: 1rem; flex-shrink: 0; }
++
++/* ─── KPI strip ─────────────────────────────────────────────────────────── */
++.kpi-strip {
++  display: grid;
++  grid-template-columns: repeat(4, 1fr);
++  gap: 12px;
++}
++
++.kpi-card {
++  background: var(--surface-raised);
++  border: 1px solid var(--border);
++  border-radius: var(--radius-md);
++  padding: 16px;
++  display: flex;
++  flex-direction: column;
++  gap: 6px;
++  box-shadow: var(--shadow-card);
++}
++
++.kpi-label {
++  font-size: 0.75rem;
++  font-weight: 500;
++  letter-spacing: 0.04em;
++  text-transform: uppercase;
++  color: var(--text-muted);
++}
++
++.kpi-value {
++  font-family: 'JetBrains Mono', ui-monospace, monospace;
++  font-size: 1.75rem;
++  font-weight: 500;
++  line-height: 1;
++  color: var(--text);
++  font-variant-numeric: tabular-nums;
++}
++
++.kpi-card[data-status="ok"] .kpi-value { color: var(--status-ok); }
++.kpi-card[data-status="risk"] .kpi-value { color: var(--status-risk); }
++.kpi-card[data-status="blocked"] .kpi-value { color: var(--status-blocked); }
++
++.kpi-sub {
++  font-size: 0.75rem;
++  color: var(--text-muted);
++  margin-top: 2px;
++}
++
++/* ─── Pipeline table ────────────────────────────────────────────────────── */
++.pipeline-section {
++  background: var(--surface-raised);
++  border: 1px solid var(--border);
++  border-radius: var(--radius-md);
++  box-shadow: var(--shadow-card);
++  overflow: hidden;
++}
++
++.pipeline-header {
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++  padding: 14px 16px;
++  border-bottom: 1px solid var(--border);
++  gap: 12px;
++}
++
++.pipeline-header h2 {
++  font-size: 0.875rem;
++  font-weight: 600;
++  letter-spacing: -0.005em;
++}
++
++.section-controls {
++  display: flex;
++  align-items: center;
++  gap: 8px;
++}
++
++.pipeline-user {
++  font-size: 0.75rem;
++  color: var(--text-muted);
++  display: flex;
++  align-items: center;
++  gap: 6px;
++}
++
++.user-chip {
++  background: var(--surface);
++  border: 1px solid var(--border);
++  border-radius: 20px;
++  padding: 2px 8px;
++  font-size: 0.75rem;
++  font-weight: 500;
++  color: var(--text);
++  cursor: pointer;
++  display: inline-flex;
++  align-items: center;
++  gap: 4px;
++}
++
++.table-scroll { overflow-x: auto; }
++
++table {
++  width: 100%;
++  border-collapse: collapse;
++  font-size: 0.8125rem;
++}
++
++thead tr {
++  border-bottom: 1px solid var(--border);
++}
++
++th {
++  text-align: left;
++  padding: 10px 12px;
++  font-size: 0.6875rem;
++  font-weight: 600;
++  letter-spacing: 0.05em;
++  text-transform: uppercase;
++  color: var(--text-muted);
++  white-space: nowrap;
++  background: var(--surface);
++}
++
++th:first-child { padding-left: 16px; }
++th:last-child  { padding-right: 16px; }
++
++tbody tr.cr-row {
++  border-bottom: 1px solid var(--border);
++  cursor: pointer;
++  transition: background 0.1s;
++  position: relative;
++}
++
++tbody tr.cr-row:last-child { border-bottom: none; }
++
++tbody tr.cr-row:hover { background: var(--row-hover); }
++tbody tr.cr-row.expanded { background: var(--row-expanded); }
++
++td {
++  padding: 11px 12px;
++  vertical-align: middle;
++}
++
++td:first-child { padding-left: 16px; }
++td:last-child  { padding-right: 16px; }
++
++/* Phase stripe: a 3px left border on the first cell */
++.cr-row td:first-child {
++  border-left: 3px solid transparent;
++  padding-left: 13px;
++}
++
++.cr-row[data-phase="Scope"]      td:first-child { border-left-color: var(--phase-scope); }
++.cr-row[data-phase="Build"]      td:first-child { border-left-color: var(--phase-build); }
++.cr-row[data-phase="Test"]       td:first-child { border-left-color: var(--phase-test); }
++.cr-row[data-phase="Go-live"]    td:first-child { border-left-color: var(--phase-golive); }
++.cr-row[data-phase="Validation"] td:first-child { border-left-color: var(--phase-validation); }
++
++/* CR number cell */
++.cr-num {
++  font-family: 'JetBrains Mono', ui-monospace, monospace;
++  font-weight: 500;
++  color: var(--accent);
++  font-size: 0.8125rem;
++  white-space: nowrap;
++}
++
++.cr-desc {
++  max-width: 260px;
++  overflow: hidden;
++  text-overflow: ellipsis;
++  white-space: nowrap;
++  font-weight: 500;
++}
++
++/* Phase badge */
++.phase-badge {
++  display: inline-block;
++  padding: 2px 7px;
++  border-radius: 20px;
++  font-size: 0.6875rem;
++  font-weight: 600;
++  letter-spacing: 0.02em;
++  white-space: nowrap;
++}
++
++.phase-badge[data-phase="Scope"]      { background: rgba(99,102,241,0.12); color: var(--phase-scope); }
++.phase-badge[data-phase="Build"]      { background: rgba(139,92,246,0.12); color: var(--phase-build); }
++.phase-badge[data-phase="Test"]       { background: rgba(245,158,11,0.12); color: var(--phase-test); }
++.phase-badge[data-phase="Go-live"]    { background: rgba(249,115,22,0.12); color: var(--phase-golive); }
++.phase-badge[data-phase="Validation"] { background: rgba(16,185,129,0.12); color: var(--phase-validation); }
++
++/* Status dot + label */
++.status-cell {
++  display: flex;
++  align-items: center;
++  gap: 6px;
++  white-space: nowrap;
++}
++.status-dot {
++  width: 7px;
++  height: 7px;
++  border-radius: 50%;
++  flex-shrink: 0;
++}
++.status-dot.ok      { background: var(--status-ok); }
++.status-dot.risk    { background: var(--status-risk); }
++.status-dot.blocked { background: var(--status-blocked); }
++.status-dot.locked  { background: var(--status-locked); }
++
++/* Days cell */
++.days-cell {
++  font-family: 'JetBrains Mono', ui-monospace, monospace;
++  font-size: 0.8125rem;
++  font-variant-numeric: tabular-nums;
++  color: var(--text-muted);
++}
++.days-cell.overdue { color: var(--status-blocked); font-weight: 500; }
++
++/* Deadline cell */
++.deadline-cell {
++  font-family: 'JetBrains Mono', ui-monospace, monospace;
++  font-size: 0.8125rem;
++  color: var(--text-muted);
++  white-space: nowrap;
++}
++
++/* Expand icon */
++.expand-icon {
++  transition: transform 0.15s;
++  color: var(--text-muted);
++  display: inline-block;
++}
++.cr-row.expanded .expand-icon { transform: rotate(90deg); }
++
++/* ─── Expanded detail row ───────────────────────────────────────────────── */
++.detail-row td {
++  padding: 0;
++  border-bottom: 1px solid var(--border);
++}
++.detail-inner {
++  padding: 16px 16px 20px;
++  display: flex;
++  flex-direction: column;
++  gap: 16px;
++  border-left: 3px solid transparent;
++}
++.detail-row[data-phase="Scope"]      .detail-inner { border-left-color: var(--phase-scope); }
++.detail-row[data-phase="Build"]      .detail-inner { border-left-color: var(--phase-build); }
++.detail-row[data-phase="Test"]       .detail-inner { border-left-color: var(--phase-test); }
++.detail-row[data-phase="Go-live"]    .detail-inner { border-left-color: var(--phase-golive); }
++.detail-row[data-phase="Validation"] .detail-inner { border-left-color: var(--phase-validation); }
++
++/* Lifecycle progress bar inside detail */
++.lifecycle-bar {
++  display: flex;
++  gap: 2px;
++  height: 6px;
++  border-radius: 3px;
++  overflow: hidden;
++}
++.lifecycle-seg {
++  flex: 1;
++  border-radius: 1px;
++  opacity: 0.25;
++  transition: opacity 0.1s;
++}
++.lifecycle-seg.done    { opacity: 1; }
++.lifecycle-seg.current { opacity: 1; outline: 2px solid var(--surface-raised); outline-offset: 1px; }
++
++.lifecycle-seg[data-phase="Scope"]      { background: var(--phase-scope); }
++.lifecycle-seg[data-phase="Build"]      { background: var(--phase-build); }
++.lifecycle-seg[data-phase="Test"]       { background: var(--phase-test); }
++.lifecycle-seg[data-phase="Go-live"]    { background: var(--phase-golive); }
++.lifecycle-seg[data-phase="Validation"] { background: var(--phase-validation); }
++
++.lifecycle-legend {
++  display: flex;
++  gap: 12px;
++  flex-wrap: wrap;
++  align-items: center;
++}
++
++.lifecycle-legend-item {
++  display: flex;
++  align-items: center;
++  gap: 5px;
++  font-size: 0.6875rem;
++  color: var(--text-muted);
++}
++.legend-swatch {
++  width: 8px;
++  height: 8px;
++  border-radius: 2px;
++}
++
++.step-info {
++  display: flex;
++  flex-direction: column;
++  gap: 4px;
++}
++.step-label {
++  font-size: 0.6875rem;
++  font-weight: 600;
++  letter-spacing: 0.05em;
++  text-transform: uppercase;
++  color: var(--text-muted);
++}
++.step-name {
++  font-size: 0.875rem;
++  font-weight: 500;
++  color: var(--text);
++}
++.step-hint {
++  font-size: 0.8125rem;
++  color: var(--text-muted);
++  font-style: italic;
++  margin-top: 2px;
++}
++.step-meta {
++  display: flex;
++  gap: 16px;
++  flex-wrap: wrap;
++  font-size: 0.75rem;
++  color: var(--text-muted);
++  margin-top: 4px;
++}
++.step-meta strong { color: var(--text); font-weight: 500; }
++
++/* Gate indicator */
++.gate-badge {
++  display: inline-flex;
++  align-items: center;
++  gap: 4px;
++  font-size: 0.6875rem;
++  font-weight: 600;
++  letter-spacing: 0.03em;
++  text-transform: uppercase;
++  color: var(--status-blocked);
++  background: rgba(239,68,68,0.1);
++  border-radius: 20px;
++  padding: 2px 7px;
++}
++
++/* ─── Empty state ───────────────────────────────────────────────────────── */
++.empty-state {
++  padding: 48px 16px;
++  text-align: center;
++  display: flex;
++  flex-direction: column;
++  align-items: center;
++  gap: 10px;
++}
++.empty-icon {
++  width: 36px;
++  height: 36px;
++  border-radius: 10px;
++  background: var(--surface);
++  border: 1px solid var(--border);
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  font-size: 1.125rem;
++  margin-bottom: 4px;
++}
++.empty-state h3 { font-size: 0.9375rem; font-weight: 600; }
++.empty-state p  { font-size: 0.8125rem; color: var(--text-muted); max-width: 320px; }
++
++/* ─── Modal ─────────────────────────────────────────────────────────────── */
++.modal-scrim {
++  position: fixed;
++  inset: 0;
++  background: var(--modal-scrim);
++  z-index: 200;
++  display: flex;
++  align-items: flex-start;
++  justify-content: center;
++  padding: 40px 16px;
++  overflow-y: auto;
++}
++
++.modal {
++  background: var(--surface-raised);
++  border: 1px solid var(--border);
++  border-radius: var(--radius-lg);
++  box-shadow: var(--shadow-modal);
++  width: 100%;
++  max-width: 480px;
++  display: flex;
++  flex-direction: column;
++  gap: 0;
++  overflow: hidden;
++}
++
++.modal-header {
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++  padding: 16px 20px;
++  border-bottom: 1px solid var(--border);
++}
++.modal-header h2 {
++  font-size: 0.9375rem;
++  font-weight: 600;
++}
++.modal-close {
++  appearance: none;
++  border: none;
++  background: transparent;
++  cursor: pointer;
++  color: var(--text-muted);
++  font-size: 1.125rem;
++  padding: 4px;
++  border-radius: var(--radius-sm);
++  display: flex;
++  align-items: center;
++  line-height: 1;
++  transition: color 0.1s, background 0.1s;
++}
++.modal-close:hover { color: var(--text); background: var(--surface); }
++.modal-close:focus-visible { outline: 2px solid var(--focus-ring); }
++
++.modal-body {
++  padding: 20px;
++  display: flex;
++  flex-direction: column;
++  gap: 16px;
++}
++
++/* ─── Forms ─────────────────────────────────────────────────────────────── */
++.field {
++  display: flex;
++  flex-direction: column;
++  gap: 5px;
++}
++.field label {
++  font-size: 0.8125rem;
++  font-weight: 500;
++  color: var(--text);
++}
++.field input,
++.field select {
++  appearance: none;
++  background: var(--surface);
++  border: 1px solid var(--border);
++  border-radius: var(--radius-sm);
++  padding: 8px 10px;
++  font-family: inherit;
++  font-size: 0.875rem;
++  color: var(--text);
++  outline: none;
++  transition: border-color 0.12s, box-shadow 0.12s;
++  width: 100%;
++}
++.field input::placeholder { color: var(--text-muted); opacity: 1; }
++.field input:focus,
++.field select:focus {
++  border-color: var(--accent);
++  box-shadow: 0 0 0 3px var(--focus-ring);
++}
++.field select {
++  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
++  background-repeat: no-repeat;
++  background-position: right 10px center;
++  padding-right: 30px;
++  cursor: pointer;
++}
++
++.form-row {
++  display: grid;
++  grid-template-columns: 1fr 1fr;
++  gap: 12px;
++}
++
++/* ─── Add member form ───────────────────────────────────────────────────── */
++.add-form {
++  background: var(--surface);
++  border: 1px solid var(--border);
++  border-radius: var(--radius-md);
++  padding: 14px;
++  display: flex;
++  flex-direction: column;
++  gap: 12px;
++}
++.add-form-title {
++  font-size: 0.8125rem;
++  font-weight: 600;
++  color: var(--text);
++}
++.add-form-row {
++  display: flex;
++  gap: 8px;
++  align-items: flex-end;
++}
++.add-form-row .field { flex: 1; }
++
++/* ─── Team list ─────────────────────────────────────────────────────────── */
++.team-list {
++  display: flex;
++  flex-direction: column;
++  gap: 0;
++  border: 1px solid var(--border);
++  border-radius: var(--radius-md);
++  overflow: hidden;
++}
++.team-empty {
++  padding: 20px;
++  text-align: center;
++  font-size: 0.8125rem;
++  color: var(--text-muted);
++}
++.team-member {
++  display: flex;
++  align-items: center;
++  gap: 10px;
++  padding: 10px 12px;
++  border-bottom: 1px solid var(--border);
++}
++.team-member:last-child { border-bottom: none; }
++
++.member-avatar {
++  width: 30px;
++  height: 30px;
++  border-radius: 50%;
++  background: var(--accent);
++  color: #fff;
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  font-size: 0.75rem;
++  font-weight: 600;
++  flex-shrink: 0;
++  letter-spacing: 0.02em;
++}
++
++.member-info {
++  flex: 1;
++  min-width: 0;
++}
++.member-name {
++  font-size: 0.8125rem;
++  font-weight: 500;
++  color: var(--text);
++  white-space: nowrap;
++  overflow: hidden;
++  text-overflow: ellipsis;
++}
++.member-email {
++  font-size: 0.75rem;
++  color: var(--text-muted);
++  white-space: nowrap;
++  overflow: hidden;
++  text-overflow: ellipsis;
++  font-family: 'JetBrains Mono', ui-monospace, monospace;
++}
++
++.role-chip {
++  display: inline-block;
++  padding: 2px 7px;
++  border-radius: 20px;
++  font-size: 0.6875rem;
++  font-weight: 600;
++  letter-spacing: 0.02em;
++  white-space: nowrap;
++  flex-shrink: 0;
++}
++.role-chip.pm         { background: rgba(67,97,238,0.12); color: var(--accent); }
++.role-chip.developer  { background: rgba(139,92,246,0.12); color: var(--phase-build); }
++.role-chip.owner      { background: rgba(16,185,129,0.12); color: var(--status-ok); }
++
++/* ─── Modal footer ──────────────────────────────────────────────────────── */
++.modal-footer {
++  padding: 14px 20px;
++  border-top: 1px solid var(--border);
++  display: flex;
++  justify-content: flex-end;
++  gap: 8px;
++}
++
++/* ─── Responsive breakpoints ────────────────────────────────────────────── */
++@media (max-width: 900px) {
++  .kpi-strip { grid-template-columns: repeat(2, 1fr); }
++}
++
++@media (max-width: 560px) {
++  body { padding-inline: 16px; }
++  .top-bar { margin-inline: -16px; padding-inline: 16px; }
++  .kpi-strip { grid-template-columns: 1fr; }
++  .form-row { grid-template-columns: 1fr; }
++  /* Collapse less important columns on small screens */
++  .col-days, .col-deadline { display: none; }
++  .cr-desc { max-width: 140px; }
++}
++
++@media (max-width: 400px) {
++  .top-bar-brand h1 { font-size: 0.8125rem; }
++  .col-owner { display: none; }
++}
++
++/* ─── Reduced motion ────────────────────────────────────────────────────── */
++@media (prefers-reduced-motion: reduce) {
++  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
++}
++</style>
++
++<!-- ─── Markup ─────────────────────────────────────────────────────────── -->
++
++<nav class="top-bar" role="banner">
++  <div class="top-bar-brand">
++    <div class="brand-dot" aria-hidden="true"></div>
++    <h1>CR Lifecycle Tracker</h1>
++  </div>
++  <div class="top-bar-controls">
++    <div class="view-toggle" role="group" aria-label="View mode">
++      <button class="view-toggle-btn active" id="btn-view-pm" onclick="setView('pm')">PM</button>
++      <button class="view-toggle-btn" id="btn-view-dev" onclick="setView('dev')">Developer</button>
++    </div>
++    <button class="btn btn-primary" id="btn-add-cr" disabled onclick="openAddCRModal()">
++      <span aria-hidden="true">+</span> Add CR
++    </button>
++    <button class="btn btn-ghost" id="btn-manage-team" onclick="openTeamModal()">Team</button>
++  </div>
++</nav>
++
++<div class="content">
++  <!-- DB unavailable banner -->
++  <div class="banner" id="db-banner" hidden>
++    <span class="banner-icon" aria-hidden="true">⚠</span>
++    Database not available — data will not persist
++  </div>
++
++  <!-- KPI strip -->
++  <div class="kpi-strip" role="region" aria-label="Summary">
++    <div class="kpi-card">
++      <div class="kpi-label">Total CRs</div>
++      <div class="kpi-value mono" id="kpi-total">—</div>
++      <div class="kpi-sub">active in pipeline</div>
++    </div>
++    <div class="kpi-card" data-status="ok">
++      <div class="kpi-label">On Track</div>
++      <div class="kpi-value mono" id="kpi-ok">—</div>
++      <div class="kpi-sub">within deadline</div>
++    </div>
++    <div class="kpi-card" data-status="risk">
++      <div class="kpi-label">At Risk</div>
++      <div class="kpi-value mono" id="kpi-risk">—</div>
++      <div class="kpi-sub">approaching threshold</div>
++    </div>
++    <div class="kpi-card" data-status="blocked">
++      <div class="kpi-label">Blocked</div>
++      <div class="kpi-value mono" id="kpi-blocked">—</div>
++      <div class="kpi-sub">needs attention</div>
++    </div>
++  </div>
++
++  <!-- Pipeline table -->
++  <section class="pipeline-section" aria-label="CR Pipeline">
++    <div class="pipeline-header">
++      <h2>Pipeline</h2>
++      <div class="section-controls">
++        <div class="pipeline-user">
++          <span>Viewing as</span>
++          <span class="user-chip" id="user-chip" onclick="openUserSelect()" title="Change user">
++            <span id="user-chip-name">—</span>
++            <span aria-hidden="true" style="font-size:0.625rem; opacity:0.7">▾</span>
++          </span>
++        </div>
++      </div>
++    </div>
++
++    <div class="table-scroll">
++      <table id="pipeline-table" aria-live="polite">
++        <thead>
++          <tr>
++            <th>CR #</th>
++            <th>Description</th>
++            <th>Phase</th>
++            <th>Current Step</th>
++            <th class="col-owner">Owner</th>
++            <th>Status</th>
++            <th class="col-days">Days</th>
++            <th class="col-deadline">Deadline</th>
++            <th style="width:28px"></th>
++          </tr>
++        </thead>
++        <tbody id="cr-tbody">
++          <!-- rows injected by JS -->
++        </tbody>
++      </table>
++    </div>
++
++    <div class="empty-state" id="empty-state">
++      <div class="empty-icon" aria-hidden="true">📋</div>
++      <h3>No CRs yet</h3>
++      <p>Add your first Change Request to start tracking the lifecycle.</p>
++    </div>
++  </section>
++</div>
++
++<!-- ─── Team modal ────────────────────────────────────────────────────────── -->
++<div class="modal-scrim" id="team-modal" hidden role="dialog" aria-modal="true" aria-labelledby="team-modal-title">
++  <div class="modal">
++    <div class="modal-header">
++      <h2 id="team-modal-title">Manage Team</h2>
++      <button class="modal-close" onclick="closeTeamModal()" aria-label="Close">✕</button>
++    </div>
++    <div class="modal-body">
++      <!-- Add member form -->
++      <div class="add-form">
++        <div class="add-form-title">Add Member</div>
++        <div class="form-row">
++          <div class="field">
++            <label for="member-name">Name</label>
++            <input type="text" id="member-name" placeholder="Full name" autocomplete="off">
++          </div>
++          <div class="field">
++            <label for="member-email">Email</label>
++            <input type="email" id="member-email" placeholder="email@hersheys.com" autocomplete="off">
++          </div>
++        </div>
++        <div class="add-form-row">
++          <div class="field">
++            <label for="member-role">Role</label>
++            <select id="member-role">
++              <option value="PM">PM</option>
++              <option value="Developer">Developer</option>
++              <option value="Change Owner">Change Owner</option>
++            </select>
++          </div>
++          <button class="btn btn-primary" onclick="addTeamMember()">Add</button>
++        </div>
++        <div id="member-error" style="font-size:0.75rem; color:var(--status-blocked); margin-top:-4px;" hidden></div>
++      </div>
++
++      <!-- Team list -->
++      <div>
++        <div style="font-size:0.8125rem; font-weight:600; margin-bottom:8px;">Current Team</div>
++        <div class="team-list" id="team-list">
++          <div class="team-empty" id="team-empty">No team members yet</div>
++        </div>
++      </div>
++    </div>
++    <div class="modal-footer">
++      <button class="btn btn-ghost" onclick="closeTeamModal()">Done</button>
++    </div>
++  </div>
++</div>
++
++<!-- ─── User select modal ─────────────────────────────────────────────────── -->
++<div class="modal-scrim" id="user-select-modal" hidden role="dialog" aria-modal="true" aria-labelledby="user-select-title">
++  <div class="modal">
++    <div class="modal-header">
++      <h2 id="user-select-title">Select Your Name</h2>
++      <button class="modal-close" onclick="closeUserSelect()" aria-label="Close">✕</button>
++    </div>
++    <div class="modal-body">
++      <div class="field">
++        <label for="user-select">I am</label>
++        <select id="user-select">
++          <option value="">— select —</option>
++        </select>
++      </div>
++    </div>
++    <div class="modal-footer">
++      <button class="btn btn-ghost" onclick="closeUserSelect()">Cancel</button>
++      <button class="btn btn-primary" onclick="confirmUserSelect()">Confirm</button>
++    </div>
++  </div>
++</div>
++
++<!-- ─── Script ────────────────────────────────────────────────────────────── -->
++<script>
++'use strict';
++
++/* ── Lifecycle template ──────────────────────────────────────────────── */
++const LIFECYCLE_TEMPLATE = [
++  { step: 1,  name: "Create CR/CD by filling out ServiceNow form", phase: "Scope", ownerRole: "Change Owner", crStatus: "New", cdStatus: "-", hardGate: false, prerequisites: [], overdueThresholdDays: 3, hint: "Developer will request for CR/CD creation in a mail with FS/TS sharepoint link" },
++  { step: 2,  name: "Create FS/TS document with test cases", phase: "Scope", ownerRole: "AMS Developer", crStatus: "New", cdStatus: "Created", hardGate: false, prerequisites: [], overdueThresholdDays: 3, hint: "If same object is locked by Project team, align with Project team and inform business with expected release date" },
++  { step: 3,  name: "Request peer review of FS/TS", phase: "Scope", ownerRole: "AMS Developer", crStatus: "New", cdStatus: "Created", hardGate: false, prerequisites: [], overdueThresholdDays: 3, hint: "" },
++  { step: 4,  name: "Request review of FS/TS by HSY IS", phase: "Scope", ownerRole: "AMS Developer", crStatus: "New", cdStatus: "Created", hardGate: false, prerequisites: [], overdueThresholdDays: 3, hint: "Get the FS/TS approved by IS. TS can have basic details on design and approach." },
++  { step: 5,  name: "Begin development", phase: "Build", ownerRole: "AMS Developer", crStatus: "New", cdStatus: "DEV: TR create/develop", hardGate: true, prerequisites: [3, 4], overdueThresholdDays: 3, hint: "" },
++  { step: 6,  name: "Development complete (ATC Check)", phase: "Build", ownerRole: "AMS Developer", crStatus: "New", cdStatus: "DEV: TR create/develop", hardGate: false, prerequisites: [], overdueThresholdDays: 3, hint: "Include the ATC check excel file in the CR folder" },
++  { step: 7,  name: "Request peer code review", phase: "Build", ownerRole: "AMS Developer Peer", crStatus: "New", cdStatus: "DEV: TR create/develop", hardGate: false, prerequisites: [], overdueThresholdDays: 3, hint: "" },
++  { step: 8,  name: "Perform unit testing", phase: "Build", ownerRole: "AMS Developer", crStatus: "New", cdStatus: "DEV: TR create/develop", hardGate: false, prerequisites: [], overdueThresholdDays: 3, hint: "" },
++  { step: 9,  name: "Release transport tasks, move CD to QA", phase: "Test", ownerRole: "AMS Developer", crStatus: "New", cdStatus: "QA: Main TR imported", hardGate: true, prerequisites: [6, 7, 8], overdueThresholdDays: 2, hint: "" },
++  { step: 10, name: "Request CoE team for Live Compare result", phase: "Test", ownerRole: "AMS Developer", crStatus: "Assess", cdStatus: "QA: Main TR imported", hardGate: false, prerequisites: [], overdueThresholdDays: 2, hint: "Reach out to Vibin Ravi (vravi@hersheys.com) for Live Compare" },
++  { step: 11, name: "Create qTest test cases", phase: "Test", ownerRole: "AMS Developer", crStatus: "Assess", cdStatus: "QA: Main TR imported", hardGate: false, prerequisites: [], overdueThresholdDays: 2, hint: "" },
++  { step: 12, name: "Add qTest test cases per Live Compare results", phase: "Test", ownerRole: "AMS Developer", crStatus: "Assess", cdStatus: "QA: Main TR imported", hardGate: false, prerequisites: [], overdueThresholdDays: 2, hint: "" },
++  { step: 13, name: "Perform SIT, document results in qTest and CR", phase: "Test", ownerRole: "AMS Developer", crStatus: "Assess", cdStatus: "QA: Main TR imported", hardGate: false, prerequisites: [], overdueThresholdDays: 2, hint: "" },
++  { step: 14, name: "Request qTest results review by HSY IS L4 (optional)", phase: "Test", ownerRole: "AMS Developer", crStatus: "Assess", cdStatus: "QA: Main TR imported", hardGate: false, prerequisites: [], overdueThresholdDays: 2, optional: true, hint: "" },
++  { step: 15, name: "UAT begins", phase: "Test", ownerRole: "HSY Business Users", crStatus: "Assess", cdStatus: "QA: Main TR imported", hardGate: false, prerequisites: [], overdueThresholdDays: 2, hint: "UAT mail should be sent out a week in advance of production release date" },
++  { step: 16, name: "UAT Signoff", phase: "Test", ownerRole: "HSY Business Users", crStatus: "Assess", cdStatus: "QA: Main TR imported", hardGate: false, prerequisites: [], overdueThresholdDays: 2, hint: "If UAT is not signed off by Thursday, request CR/CD push out" },
++  { step: 17, name: "Request review by HSY IS L4, move CD to PreProd Review", phase: "Go-live", ownerRole: "AMS Change Owner", crStatus: "Assess", cdStatus: "PreProd Review", hardGate: true, prerequisites: [13, 16], overdueThresholdDays: 1, hint: "Before requesting IS approval: ensure qTest is updated in CR, FS/TS link in CR description, ATC check done, CD in PreProd Review status" },
++  { step: 18, name: "IS L4 approves or escalates to CAB, move CD to HSY Quality Approval", phase: "Go-live", ownerRole: "HSY IS L4", crStatus: "Assess", cdStatus: "HSY Quality Approval", hardGate: false, prerequisites: [], overdueThresholdDays: 1, hint: "Follow up with IS to get CR in Authorize status and CD in HSY Quality Approval by Thursday" },
++  { step: 19, name: "CR & CD goes to CAB (if qualifies)", phase: "Go-live", ownerRole: "AMS Change Owner", crStatus: "Authorize", cdStatus: "HSY Quality Approval", hardGate: false, prerequisites: [], overdueThresholdDays: 1, hint: "Change owner to present the CR in CAB" },
++  { step: 20, name: "CAB approves or rejects", phase: "Go-live", ownerRole: "HSY Release Managers", crStatus: "Authorize", cdStatus: "HSY Quality Approval", hardGate: false, prerequisites: [], overdueThresholdDays: 1, hint: "" },
++  { step: 21, name: "CR & CD released into production, CD to Deploy", phase: "Validation", ownerRole: "Basis / HSY Release Managers", crStatus: "Implement", cdStatus: "Deploy", hardGate: false, prerequisites: [], overdueThresholdDays: 3, hint: "" },
++  { step: 22, name: "AMS team validates post release, CD to Imported into Production", phase: "Validation", ownerRole: "Basis / HSY Release Managers", crStatus: "Implement", cdStatus: "Imported into Production", hardGate: false, prerequisites: [], overdueThresholdDays: 3, hint: "" },
++  { step: 23, name: "Business users validate, CD to Completed", phase: "Validation", ownerRole: "Basis / HSY Release Managers", crStatus: "Implement", cdStatus: "Completed", hardGate: false, prerequisites: [], overdueThresholdDays: 3, hint: "" },
++  { step: 24, name: "Request HSY IS for CR closure", phase: "Validation", ownerRole: "AMS Change Owner", crStatus: "Closed", cdStatus: "Completed", hardGate: true, prerequisites: [22, 23], overdueThresholdDays: 3, hint: "Make sure Live Task and QCoE task is completed before requesting HSY IS for CR closure" }
++];
++
++/* ── State ───────────────────────────────────────────────────────────── */
++let teamMembers  = [];   // { id, name, email, role }
++let crs          = [];   // populated in later tasks
++let currentView  = 'pm';
++let currentUser  = '';
++let dbAvailable  = false;
++let expandedCRs  = new Set();
++
++/* ── DB helpers ──────────────────────────────────────────────────────── */
++async function dbGet(collection, docId) {
++  try { return await window.claude?.db?.get(collection, docId) ?? null; }
++  catch { return null; }
++}
++
++async function dbSet(collection, docId, data) {
++  try { await window.claude?.db?.set(collection, docId, data); return true; }
++  catch { return false; }
++}
++
++async function dbList(collection) {
++  try { return await window.claude?.db?.list(collection) ?? []; }
++  catch { return []; }
++}
++
++async function dbDelete(collection, docId) {
++  try { await window.claude?.db?.delete(collection, docId); return true; }
++  catch { return false; }
++}
++
++/* ── Boot ────────────────────────────────────────────────────────────── */
++async function boot() {
++  // Detect DB availability
++  dbAvailable = !!(window.claude?.db);
++  if (!dbAvailable) {
++    document.getElementById('db-banner').hidden = false;
++  }
++
++  // Restore currentUser from localStorage
++  try {
++    const saved = localStorage.getItem('cr-tracker-user');
++    if (saved) currentUser = saved;
++  } catch {}
++
++  // Load team from DB
++  await loadTeam();
++
++  // Load CRs (stub for later tasks)
++  // await loadCRs();
++
++  renderAll();
++}
++
++/* ── Team ────────────────────────────────────────────────────────────── */
++async function loadTeam() {
++  if (!dbAvailable) return;
++  try {
++    const rows = await dbList('team');
++    // dbList may return array of {id, ...data} or {docs:[...]}
++    if (Array.isArray(rows)) {
++      teamMembers = rows.map(r => {
++        if (r.data) return { id: r.id, ...r.data };
++        const { id, ...rest } = r;
++        return { id, ...rest };
++      });
++    }
++  } catch {}
++}
++
++async function addTeamMember() {
++  const nameEl  = document.getElementById('member-name');
++  const emailEl = document.getElementById('member-email');
++  const roleEl  = document.getElementById('member-role');
++  const errEl   = document.getElementById('member-error');
++
++  const name  = nameEl.value.trim();
++  const email = emailEl.value.trim();
++  const role  = roleEl.value;
++
++  errEl.hidden = true;
++
++  if (!name) { showMemberError('Name is required'); return; }
++  if (!email || !email.includes('@')) { showMemberError('Valid email is required'); return; }
++
++  const id = 'member-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
++  const member = { id, name, email, role };
++
++  if (dbAvailable) {
++    const ok = await dbSet('team', id, { name, email, role });
++    if (!ok) { showMemberError('Could not save — DB write failed'); return; }
++  }
++
++  teamMembers.push(member);
++  nameEl.value  = '';
++  emailEl.value = '';
++  roleEl.value  = 'PM';
++
++  renderTeamList();
++  updateAddCRButton();
++  populateUserSelect();
++}
++
++async function deleteTeamMember(id) {
++  if (dbAvailable) await dbDelete('team', id);
++  teamMembers = teamMembers.filter(m => m.id !== id);
++  renderTeamList();
++  updateAddCRButton();
++  populateUserSelect();
++  // If current user was deleted, clear
++  if (currentUser && !teamMembers.find(m => m.name === currentUser)) {
++    currentUser = '';
++    saveCurrentUser();
++    renderUserChip();
++  }
++}
++
++function showMemberError(msg) {
++  const el = document.getElementById('member-error');
++  el.textContent = msg;
++  el.hidden = false;
++}
++
++function renderTeamList() {
++  const list  = document.getElementById('team-list');
++  const empty = document.getElementById('team-empty');
++
++  // Remove old member rows
++  list.querySelectorAll('.team-member').forEach(n => n.remove());
++
++  if (teamMembers.length === 0) {
++    empty.hidden = false;
++    return;
++  }
++  empty.hidden = true;
++
++  for (const m of teamMembers) {
++    const initials = m.name.split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
++    const roleClass = m.role === 'PM' ? 'pm' : m.role === 'Developer' ? 'developer' : 'owner';
++    const roleLabel = m.role;
++
++    const row = document.createElement('div');
++    row.className = 'team-member';
++    row.dataset.id = m.id;
++    row.innerHTML = `
++      <div class="member-avatar" aria-hidden="true">${escHtml(initials)}</div>
++      <div class="member-info">
++        <div class="member-name">${escHtml(m.name)}</div>
++        <div class="member-email">${escHtml(m.email)}</div>
++      </div>
++      <span class="role-chip ${roleClass}">${escHtml(roleLabel)}</span>
++      <button class="btn-icon" onclick="deleteTeamMember('${escAttr(m.id)}')" aria-label="Remove ${escAttr(m.name)}">✕</button>
++    `;
++    list.appendChild(row);
++  }
++}
++
++function updateAddCRButton() {
++  const hasDev   = teamMembers.some(m => m.role === 'Developer');
++  const hasOwner = teamMembers.some(m => m.role === 'Change Owner');
++  document.getElementById('btn-add-cr').disabled = !(hasDev && hasOwner);
++}
++
++/* ── User selection ──────────────────────────────────────────────────── */
++function populateUserSelect() {
++  const sel = document.getElementById('user-select');
++  const prev = sel.value;
++  sel.innerHTML = '<option value="">— select —</option>';
++  for (const m of teamMembers) {
++    const opt = document.createElement('option');
++    opt.value = m.name;
++    opt.textContent = `${m.name} (${m.role})`;
++    sel.appendChild(opt);
++  }
++  // Restore selection if still valid
++  if (prev && teamMembers.find(m => m.name === prev)) sel.value = prev;
++}
++
++function renderUserChip() {
++  const chip = document.getElementById('user-chip-name');
++  chip.textContent = currentUser || '—';
++}
++
++function saveCurrentUser() {
++  try { localStorage.setItem('cr-tracker-user', currentUser); } catch {}
++}
++
++function openUserSelect() {
++  populateUserSelect();
++  const sel = document.getElementById('user-select');
++  if (currentUser) sel.value = currentUser;
++  document.getElementById('user-select-modal').hidden = false;
++}
++function closeUserSelect() {
++  document.getElementById('user-select-modal').hidden = true;
++}
++function confirmUserSelect() {
++  const sel = document.getElementById('user-select');
++  if (sel.value) {
++    currentUser = sel.value;
++    saveCurrentUser();
++    renderUserChip();
++  }
++  closeUserSelect();
++}
++
++/* ── View toggle ─────────────────────────────────────────────────────── */
++function setView(v) {
++  currentView = v;
++  document.getElementById('btn-view-pm').classList.toggle('active', v === 'pm');
++  document.getElementById('btn-view-dev').classList.toggle('active', v === 'dev');
++  renderCRTable();
++}
++
++/* ── CR table (stub — no CRs yet, just empty state) ─────────────────── */
++function renderCRTable() {
++  const tbody      = document.getElementById('cr-tbody');
++  const emptyState = document.getElementById('empty-state');
++
++  tbody.innerHTML = '';
++
++  const visibleCRs = getCRsForView();
++
++  if (visibleCRs.length === 0) {
++    emptyState.hidden = false;
++    return;
++  }
++  emptyState.hidden = true;
++
++  for (const cr of visibleCRs) {
++    renderCRRow(cr, tbody);
++  }
++}
++
++function getCRsForView() {
++  if (currentView === 'dev' && currentUser) {
++    return crs.filter(cr => cr.ownerName === currentUser);
++  }
++  return crs;
++}
++
++function renderCRRow(cr, tbody) {
++  const step    = LIFECYCLE_TEMPLATE.find(s => s.step === cr.currentStep) || LIFECYCLE_TEMPLATE[0];
++  const phase   = step.phase;
++  const daysAgo = cr.stepStarted ? Math.floor((Date.now() - cr.stepStarted) / 86400000) : 0;
++  const overdue = daysAgo > step.overdueThresholdDays;
++
++  const statusKey = cr.status || (overdue ? 'risk' : 'ok');
++  const statusLabel = { ok: 'On Track', risk: 'At Risk', blocked: 'Blocked', locked: 'Locked' }[statusKey] || statusKey;
++
++  const expanded = expandedCRs.has(cr.id);
++
++  // Main row
++  const tr = document.createElement('tr');
++  tr.className = 'cr-row' + (expanded ? ' expanded' : '');
++  tr.dataset.id    = cr.id;
++  tr.dataset.phase = phase;
++  tr.setAttribute('aria-expanded', String(expanded));
++  tr.onclick = () => toggleCRExpand(cr.id);
++
++  tr.innerHTML = `
++    <td><span class="cr-num mono">${escHtml(cr.crNumber || cr.id)}</span></td>
++    <td><span class="cr-desc" title="${escAttr(cr.description || '')}">${escHtml(cr.description || 'Untitled CR')}</span></td>
++    <td><span class="phase-badge" data-phase="${escAttr(phase)}">${escHtml(phase)}</span></td>
++    <td><span class="mono" style="color:var(--text-muted); font-size:0.75rem;">${step.step} / 24</span>&nbsp;<span style="color:var(--text); font-size:0.8125rem;">${escHtml(step.name.length > 40 ? step.name.slice(0, 38) + '…' : step.name)}</span></td>
++    <td class="col-owner">${escHtml(cr.ownerName || '—')}</td>
++    <td>
++      <div class="status-cell">
++        <div class="status-dot ${escAttr(statusKey)}" aria-hidden="true"></div>
++        ${escHtml(statusLabel)}
++      </div>
++    </td>
++    <td class="days-cell col-days${overdue ? ' overdue' : ''}">${daysAgo}d</td>
++    <td class="deadline-cell col-deadline">${cr.deadline ? formatDate(cr.deadline) : '—'}</td>
++    <td><span class="expand-icon" aria-hidden="true">›</span></td>
++  `;
++  tbody.appendChild(tr);
++
++  // Detail row
++  const dr = document.createElement('tr');
++  dr.className = 'detail-row';
++  dr.dataset.phase = phase;
++  if (!expanded) dr.hidden = true;
++
++  const td = document.createElement('td');
++  td.colSpan = 9;
++  td.innerHTML = buildDetailInner(cr, step, phase);
++  dr.appendChild(td);
++  tbody.appendChild(dr);
++}
++
++function buildDetailInner(cr, step, phase) {
++  const segs = LIFECYCLE_TEMPLATE.map(s => {
++    let cls = 'lifecycle-seg';
++    if (s.step < (cr.currentStep || 1)) cls += ' done';
++    else if (s.step === (cr.currentStep || 1)) cls += ' current';
++    return `<div class="${cls}" data-phase="${escAttr(s.phase)}" title="Step ${s.step}: ${escAttr(s.name)}"></div>`;
++  }).join('');
++
++  const phases = ['Scope','Build','Test','Go-live','Validation'];
++  const phaseVars = { Scope: '--phase-scope', Build: '--phase-build', Test: '--phase-test', 'Go-live': '--phase-golive', Validation: '--phase-validation' };
++  const legend = phases.map(p => `
++    <div class="lifecycle-legend-item">
++      <div class="legend-swatch" style="background:var(${phaseVars[p]})"></div>
++      ${escHtml(p)}
++    </div>
++  `).join('');
++
++  const prereqText = step.prerequisites.length
++    ? `Prerequisites: Steps ${step.prerequisites.join(', ')}`
++    : '';
++
++  return `
++    <div class="detail-inner">
++      <div>
++        <div class="lifecycle-bar" role="progressbar" aria-valuenow="${step.step}" aria-valuemin="1" aria-valuemax="24">${segs}</div>
++        <div class="lifecycle-legend" style="margin-top:6px;">${legend}</div>
++      </div>
++      <div class="step-info">
++        <div class="step-label">Step ${step.step} of 24 · ${escHtml(step.phase)}</div>
++        <div class="step-name">${escHtml(step.name)}</div>
++        ${step.hint ? `<div class="step-hint">${escHtml(step.hint)}</div>` : ''}
++        <div class="step-meta">
++          <span>CR Status: <strong>${escHtml(step.crStatus)}</strong></span>
++          <span>CD Status: <strong>${escHtml(step.cdStatus)}</strong></span>
++          <span>Owner Role: <strong>${escHtml(step.ownerRole)}</strong></span>
++          ${prereqText ? `<span>${escHtml(prereqText)}</span>` : ''}
++          ${step.hardGate ? `<span class="gate-badge">⛔ Hard Gate</span>` : ''}
++          ${step.optional ? `<span style="color:var(--text-muted); font-size:0.75rem;">(optional)</span>` : ''}
++        </div>
++      </div>
++    </div>
++  `;
++}
++
++function toggleCRExpand(id) {
++  if (expandedCRs.has(id)) expandedCRs.delete(id);
++  else expandedCRs.add(id);
++  renderCRTable();
++}
++
++/* ── KPIs ────────────────────────────────────────────────────────────── */
++function renderKPIs() {
++  const total   = crs.length;
++  const ok      = crs.filter(c => (c.status || 'ok') === 'ok').length;
++  const risk    = crs.filter(c => c.status === 'risk').length;
++  const blocked = crs.filter(c => c.status === 'blocked').length;
++
++  document.getElementById('kpi-total').textContent   = total   || '—';
++  document.getElementById('kpi-ok').textContent      = total ? ok      : '—';
++  document.getElementById('kpi-risk').textContent    = total ? risk    : '—';
++  document.getElementById('kpi-blocked').textContent = total ? blocked : '—';
++}
++
++/* ── Modal helpers ───────────────────────────────────────────────────── */
++function openTeamModal() {
++  renderTeamList();
++  document.getElementById('team-modal').hidden = false;
++}
++function closeTeamModal() {
++  document.getElementById('team-modal').hidden = true;
++}
++function openAddCRModal() {
++  // Placeholder — implemented in later tasks
++  alert('Add CR — coming in Task 2');
++}
++
++/* ── Escape helpers ──────────────────────────────────────────────────── */
++function escHtml(s) {
++  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
++}
++function escAttr(s) {
++  return String(s ?? '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
++}
++
++/* ── Date helper ─────────────────────────────────────────────────────── */
++function formatDate(ts) {
++  try {
++    return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
++  } catch { return '—'; }
++}
++
++/* ── Render all ──────────────────────────────────────────────────────── */
++function renderAll() {
++  renderKPIs();
++  renderCRTable();
++  renderUserChip();
++  updateAddCRButton();
++}
++
++/* ── Keyboard: close modals on Escape ────────────────────────────────── */
++document.addEventListener('keydown', e => {
++  if (e.key !== 'Escape') return;
++  if (!document.getElementById('team-modal').hidden)        closeTeamModal();
++  if (!document.getElementById('user-select-modal').hidden) closeUserSelect();
++});
++
++/* ── Click outside modal to close ───────────────────────────────────── */
++document.getElementById('team-modal').addEventListener('click', e => {
++  if (e.target === e.currentTarget) closeTeamModal();
++});
++document.getElementById('user-select-modal').addEventListener('click', e => {
++  if (e.target === e.currentTarget) closeUserSelect();
++});
++
++/* ── Init ────────────────────────────────────────────────────────────── */
++boot();
++</script>

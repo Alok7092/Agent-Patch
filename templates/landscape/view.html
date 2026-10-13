@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">SAP Landscape</h1>
+    <a href="/landscape/upload-form" class="bg-indigo-600 text-white px-4 py-2 rounded text-sm hover:bg-indigo-700">Upload New</a>
+</div>
+{% if snapshot %}
+<p class="text-sm text-gray-600 mb-4">Active snapshot: {{ snapshot.filename }} ({{ snapshot.system_count }} systems, uploaded {{ snapshot.uploaded_at }})</p>
+<div class="bg-white rounded-lg shadow overflow-hidden">
+    <table class="w-full">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">SID</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Product</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Component</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Version</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Tier</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y">
+            {% for entry in entries %}
+            <tr>
+                <td class="px-4 py-3 font-mono">{{ entry.sid }}</td>
+                <td class="px-4 py-3">{{ entry.product }}</td>
+                <td class="px-4 py-3">{{ entry.component_code }}</td>
+                <td class="px-4 py-3">{{ entry.version }}</td>
+                <td class="px-4 py-3">{{ entry.tier }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p class="text-gray-500">No landscape uploaded yet. <a href="/landscape/upload-form" class="text-indigo-600 underline">Upload one</a>.</p>
+{% endif %}
+{% endblock %}

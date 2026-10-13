@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mb-6">
+    <a href="/notes" class="text-indigo-600 text-sm">&larr; Back to notes</a>
+    <h1 class="text-2xl font-bold mt-2">{{ note.note_number }} &mdash; {{ note.title }}</h1>
+    <div class="flex gap-4 mt-2 text-sm text-gray-600">
+        <span>CVSS: <strong>{{ note.cvss_score }}</strong></span>
+        <span>Priority: <strong>{{ note.priority }}</strong></span>
+        <span>Solution: {{ note.solution_type }}</span>
+    </div>
+</div>
+
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+    <h2 class="font-semibold mb-2">Description</h2>
+    <p class="text-gray-700">{{ note.description }}</p>
+</div>
+
+<h2 class="text-xl font-bold mb-4">Affected Systems ({{ matches | length }})</h2>
+<div class="space-y-3">
+    {% for match in matches %}
+    <div class="bg-white rounded-lg shadow p-4 flex justify-between items-center">
+        <div>
+            <span class="font-mono font-bold">{{ match.sid }}</span>
+            <span class="ml-2 text-sm text-gray-600">{{ match.component }} v{{ match.system_version }}</span>
+            <span class="ml-2 px-2 py-0.5 rounded text-xs font-medium
+                {% if match.confidence == 'HIGH' %}bg-green-100 text-green-800
+                {% elif match.confidence == 'MEDIUM' %}bg-yellow-100 text-yellow-800
+                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                {{ match.confidence }}
+            </span>
+            <span class="ml-2 text-xs text-gray-500">Score: {{ "%.1f"|format(match.priority_score) }}</span>
+            <p class="text-sm text-gray-600 mt-1">{{ match.match_reason }}</p>
+        </div>
+        <div class="flex gap-2">
+            {% if match.status == 'pending' %}
+            <form method="post" action="/notes/{{ note.note_number }}/approve/{{ match.id }}">
+                <button class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700">Approve</button>
+            </form>
+            <form method="post" action="/notes/{{ note.note_number }}/dismiss/{{ match.id }}">
+                <button class="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm hover:bg-gray-400">Dismiss</button>
+            </form>
+            {% else %}
+            <span class="text-sm text-gray-500">{{ match.status }}</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

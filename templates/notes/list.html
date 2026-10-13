@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">Security Notes</h1>
+</div>
+<div class="bg-white rounded-lg shadow overflow-hidden">
+    <table class="w-full">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Note</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Title</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">CVSS</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Priority</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Matches</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Status</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y">
+            {% for item in notes_data %}
+            <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='/notes/{{ item.note.note_number }}'">
+                <td class="px-4 py-3 font-mono text-sm">{{ item.note.note_number }}</td>
+                <td class="px-4 py-3">{{ item.note.title }}</td>
+                <td class="px-4 py-3">
+                    <span class="{% if item.note.cvss_score >= 9 %}text-red-600 font-bold{% elif item.note.cvss_score >= 7 %}text-orange-600{% else %}text-gray-600{% endif %}">
+                        {{ item.note.cvss_score }}
+                    </span>
+                </td>
+                <td class="px-4 py-3">
+                    <span class="px-2 py-1 rounded text-xs font-medium
+                        {% if item.note.priority == 'hot_news' %}bg-red-100 text-red-800
+                        {% elif item.note.priority == 'high' %}bg-orange-100 text-orange-800
+                        {% elif item.note.priority == 'medium' %}bg-yellow-100 text-yellow-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {{ item.note.priority }}
+                    </span>
+                </td>
+                <td class="px-4 py-3">{{ item.match_count }}</td>
+                <td class="px-4 py-3 text-sm">{{ item.note.status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

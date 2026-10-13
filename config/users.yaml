@@ -1,0 +1,38 @@
+# ============================================================
+# SNAP (SAP Security Note AI Patch) — Dashboard Users
+# ============================================================
+# Define who can log into the dashboard. Each user needs:
+#   username      — login name
+#   password_hash — bcrypt hash of the password (see below)
+#   role          — "admin" (full access) or "viewer" (read-only)
+#   email         — optional, for notifications
+#
+# IMPORTANT: Generate a password hash BEFORE deploying.
+# Run this command to generate a bcrypt hash for any password:
+#
+#   python -c "import bcrypt; print(bcrypt.hashpw(b'YOUR_PASSWORD', bcrypt.gensalt()).decode())"
+#
+# Replace YOUR_PASSWORD with the actual password.
+# Paste the full $2b$... string into password_hash below.
+#
+# WARNING: If password_hash is left empty for the admin user,
+# the app defaults to password "admin" — change this before
+# deploying to any shared or client environment.
+# ============================================================
+
+users:
+  - username: admin
+    password_hash: ""  # <-- Replace with bcrypt hash before deploying
+    role: admin
+    email: ""
+
+  # Example: add more users
+  # - username: basis_lead
+  #   password_hash: "$2b$12$..."
+  #   role: admin
+  #   email: basis_lead@client.com
+  #
+  # - username: security_reviewer
+  #   password_hash: "$2b$12$..."
+  #   role: viewer
+  #   email: reviewer@client.com

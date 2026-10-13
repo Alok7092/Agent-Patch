@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  snap:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../data:/app/data
+      - ../config:/app/config
+    env_file:
+      - ../.env
+    environment:
+      - AGENT_PATCH_MODE=local
+    restart: unless-stopped

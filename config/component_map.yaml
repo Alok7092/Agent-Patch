@@ -1,0 +1,19 @@
+components:
+  SAP_BASIS:
+    description: "SAP Basis Component"
+    aliases: ["SAPBASIS", "SAP BASIS", "BC-CST"]
+  SAP_ABA:
+    description: "SAP Application Basis"
+    aliases: ["SAPABA", "SAP ABA", "BC-ABA"]
+  KERNEL:
+    description: "SAP Kernel"
+    aliases: ["SAP_KERNEL", "SAPKERNEL", "BC-SRV-KRN"]
+  SAP_UI:
+    description: "SAP UI Technologies"
+    aliases: ["SAPUI", "SAP UI", "CA-UI5"]
+  SAP_APPL:
+    description: "SAP Applications"
+    aliases: ["SAPAPPL"]
+  SAP_BW:
+    description: "SAP Business Warehouse"
+    aliases: ["SAPBW", "BW"]

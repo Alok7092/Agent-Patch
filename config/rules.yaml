@@ -1,0 +1,28 @@
+version_matching:
+  strategies:
+    - exact_range
+    - prefix_match
+    - kernel_match
+
+component_aliases:
+  "BC-SRV-KRN": ["KERNEL", "SAP_KERNEL"]
+  "BC-ABA": ["SAP_ABA"]
+  "BC-CST": ["SAP_BASIS"]
+  "BC-MID": ["SAP_PI", "SAP_XI"]
+
+product_component_map:
+  "S/4HANA": ["SAP_BASIS", "SAP_ABA", "SAP_UI", "KERNEL"]
+  "ECC": ["SAP_BASIS", "SAP_ABA", "KERNEL", "SAP_APPL"]
+  "BW/4HANA": ["SAP_BASIS", "SAP_BW", "KERNEL"]
+  "Solution Manager": ["SAP_BASIS", "ST", "KERNEL"]
+
+tier_weights:
+  Prod: 4
+  QA: 2
+  Dev: 1
+  Sandbox: 0.5
+
+confidence_weights:
+  HIGH: 1.0
+  MEDIUM: 0.7
+  LOW: 0.4

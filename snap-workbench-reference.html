@@ -1,0 +1,592 @@
+<title>SNAP Workbench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --base:#0B0F15; --surface:#111720; --surface-2:#181E2A; --surface-3:#222A38;
+  --border:#2A3244; --border-soft:rgba(255,255,255,.06);
+  --ink:#E2E6EE; --ink-dim:#8590A5; --ink-faint:#586073;
+  --accent:#6E8BD4; --accent-dim:#4A6099; --accent-soft:rgba(110,139,212,.12);
+  --ok:#4FB286; --ok-soft:rgba(79,178,134,.12);
+  --warn:#E8A040; --warn-soft:rgba(232,160,64,.10);
+  --hot:#EF5565; --hot-soft:rgba(239,85,101,.10);
+  --high:#E88040; --high-soft:rgba(232,128,64,.10);
+  --med:#D4AD42; --med-soft:rgba(212,173,66,.10);
+  --low:#6E8AB0; --low-soft:rgba(110,138,176,.12);
+  --shadow:0 20px 48px -16px rgba(6,8,14,.6);
+  --shadow-sm:0 2px 8px -2px rgba(6,8,14,.3);
+  --r:12px; --r-sm:8px; --r-xs:4px;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --display:'Space Grotesk',system-ui,sans-serif;
+  --body:'Plus Jakarta Sans',system-ui,sans-serif;
+  --ease:cubic-bezier(.25,1,.5,1); --spring:cubic-bezier(.2,.9,.3,1);
+}
+body{background:var(--base);color:var(--ink);font-family:var(--body);font-size:14px;
+  line-height:1.5;-webkit-font-smoothing:antialiased;padding:0 !important}
+body::before{content:"";position:fixed;inset:0;z-index:9999;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.02}
+*{box-sizing:border-box;margin:0}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
+
+/* === Reference strip === */
+.ref{position:sticky;top:env(safe-area-inset-top,0px);z-index:200;background:rgba(11,15,21,.92);
+  backdrop-filter:blur(16px);border-bottom:1px solid var(--border-soft);
+  padding:0 24px;display:flex;align-items:center;height:44px;gap:14px;overflow-x:auto}
+.ref-t{font-family:var(--display);font-size:12px;font-weight:600;color:var(--ink-faint);
+  letter-spacing:.02em;white-space:nowrap;text-transform:uppercase}
+.ref-sep{width:1px;height:18px;background:var(--border);flex:none}
+.ref-tabs{display:flex;gap:3px}
+.ref-tab{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:500;color:var(--ink-faint);
+  white-space:nowrap;transition:all .2s var(--ease)}
+.ref-tab:hover{background:var(--surface-2);color:var(--ink-dim)}
+.ref-tab.active{background:var(--accent-soft);color:var(--accent)}
+
+/* === Login overlay === */
+#login-overlay{position:fixed;inset:0;z-index:150;display:grid;place-items:center;padding:24px;
+  background:radial-gradient(600px 400px at 50% 36%,rgba(110,139,212,.06),transparent 60%),var(--base)}
+#login-overlay[hidden]{display:none !important}
+.login-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);
+  border-radius:18px;padding:40px 34px;box-shadow:var(--shadow),0 0 0 1px rgba(255,255,255,.03) inset;
+  animation:loginIn .5s var(--spring) both}
+@keyframes loginIn{from{opacity:0;transform:scale(.97) translateY(10px)}}
+.login-mark{width:52px;height:52px;margin:0 auto 14px;border-radius:14px;display:grid;place-items:center;
+  background:var(--accent-soft);border:1px solid var(--accent-dim)}
+.login-card h1{font-family:var(--display);font-weight:700;font-size:21px;text-align:center;
+  letter-spacing:-.02em;text-wrap:balance}
+.login-sub{color:var(--ink-dim);font-size:13px;text-align:center;margin:5px 0 26px}
+.fld{margin-bottom:14px}
+.fld label{display:block;font-size:12px;font-weight:500;color:var(--ink-dim);margin-bottom:5px}
+.fld input{width:100%;padding:11px 13px;background:var(--surface-2);border:1px solid var(--border);
+  border-radius:10px;color:var(--ink);font-family:var(--body);font-size:14px;outline:none;
+  transition:border-color .2s,box-shadow .2s}
+.fld input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.fld input::placeholder{color:var(--ink-faint)}
+.btn-sign{width:100%;padding:12px;background:var(--accent);color:#0B0F15;border:0;border-radius:10px;
+  font-size:14px;font-weight:600;cursor:pointer;margin-top:4px;transition:filter .2s,transform .2s var(--spring)}
+.btn-sign:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn-sign:active{transform:scale(.97)}
+.login-foot{text-align:center;margin-top:18px;font-size:11px;color:var(--ink-faint)}
+.login-foot a{color:var(--accent);cursor:pointer}
+
+/* === App shell === */
+#app{display:none}
+#app.show{display:block}
+
+/* === Nav === */
+.snap-nav{position:sticky;top:44px;z-index:100;background:rgba(11,15,21,.88);
+  backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--border-soft)}
+.snap-nav-inner{max-width:1280px;margin:0 auto;padding:0 clamp(16px,3vw,28px);height:54px;
+  display:flex;align-items:center;gap:18px}
+.snap-brand{display:flex;align-items:center;gap:10px}
+.snap-mark{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;
+  background:var(--accent-soft);border:1px solid var(--accent-dim);flex:none}
+.snap-brand .name{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:-.01em}
+.snap-brand .page{color:var(--ink-dim);font-size:13px;margin-left:6px;padding-left:10px;
+  border-left:1px solid var(--border)}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.nav-icon{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;color:var(--ink-faint);
+  border:1px solid var(--border);transition:all .2s var(--ease)}
+.nav-icon:hover{border-color:var(--accent-dim);color:var(--ink-dim)}
+.nav-avatar{width:30px;height:30px;border-radius:50%;background:var(--surface-3);border:1px solid var(--border);
+  display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:var(--ink-dim)}
+
+/* === Content === */
+.snap-body{max-width:1280px;margin:0 auto;padding:clamp(20px,3vw,28px) clamp(16px,3vw,28px) 60px}
+
+/* === KPI === */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+@media(max-width:640px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:18px 20px;position:relative;overflow:hidden;transition:border-color .2s,transform .3s var(--spring)}
+.kpi:hover{border-color:var(--accent-dim);transform:translateY(-2px)}
+.kpi .edge{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:0 3px 3px 0}
+.kpi .num{font-family:var(--display);font-weight:700;font-size:clamp(28px,4vw,34px);
+  line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.kpi .lab{font-size:13px;font-weight:500;margin-top:8px;color:var(--ink)}
+.kpi .sub{font-size:11px;color:var(--ink-faint);margin-top:2px}
+
+/* === Filters === */
+.filter-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;align-items:center}
+.fselect{appearance:none;background:var(--surface);border:1px solid var(--border);color:var(--ink-dim);
+  font-family:var(--body);font-size:12.5px;padding:8px 30px 8px 12px;border-radius:999px;outline:none;
+  cursor:pointer;transition:border-color .2s,box-shadow .2s;
+  background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238590A5' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center}
+.fselect:hover{border-color:var(--accent-dim);color:var(--ink)}
+.fselect:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.fsearch{background:var(--surface);border:1px solid var(--border);color:var(--ink);font-family:var(--body);
+  font-size:12.5px;padding:8px 12px;border-radius:999px;outline:none;width:180px;
+  transition:border-color .2s,box-shadow .2s;margin-left:auto}
+.fsearch::placeholder{color:var(--ink-faint)}
+.fsearch:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+
+/* === Table === */
+.tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  overflow:hidden;box-shadow:var(--shadow-sm)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink-faint);font-weight:500;padding:12px 16px;
+  border-bottom:1px solid var(--border);background:var(--surface-2)}
+tbody td{padding:13px 16px;border-bottom:1px solid var(--border-soft);vertical-align:middle}
+tbody tr{transition:background .15s var(--ease);cursor:pointer}
+tbody tr:hover{background:var(--surface-2)}
+tbody tr:last-child td{border-bottom:0}
+tbody tr.selected{background:var(--accent-soft)}
+tbody tr.selected td{border-bottom-color:transparent}
+td.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.note-link{font-family:var(--mono);font-weight:500;color:var(--accent);font-size:12.5px}
+.title-cell{font-weight:500;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sys-cell{font-family:var(--mono);font-size:12px;color:var(--ink-dim)}
+
+/* === Badges === */
+.badge{font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.04em;
+  text-transform:uppercase;border-radius:var(--r-xs);padding:3px 7px;display:inline-block;white-space:nowrap}
+.b-hot{background:var(--hot-soft);color:var(--hot)}
+.b-high{background:var(--high-soft);color:var(--high)}
+.b-med{background:var(--med-soft);color:var(--med)}
+.b-low{background:var(--low-soft);color:var(--low)}
+.status-pill{font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.04em;
+  text-transform:uppercase;border-radius:999px;padding:3px 9px;display:inline-flex;
+  align-items:center;gap:5px;white-space:nowrap}
+.st-ready{color:var(--ok);border:1px solid rgba(79,178,134,.3);background:var(--ok-soft)}
+.st-review{color:var(--warn);border:1px solid rgba(232,160,64,.25);background:var(--warn-soft)}
+.st-complete{color:var(--ink-faint);border:1px solid var(--border);background:var(--surface-2)}
+.st-approved{color:var(--ok);border:1px solid rgba(79,178,134,.3);background:var(--ok-soft)}
+.decision-cell{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500}
+.decision-cell .dot{width:6px;height:6px;border-radius:50%;flex:none}
+
+/* === Action buttons === */
+.btn-sm{padding:6px 14px;border-radius:var(--r-sm);font-size:12px;font-weight:600;
+  transition:all .2s var(--ease);display:inline-flex;align-items:center;gap:6px}
+.btn-approve{background:var(--ok-soft);color:var(--ok);border:1px solid rgba(79,178,134,.25)}
+.btn-approve:hover{background:rgba(79,178,134,.2);transform:translateY(-1px)}
+.btn-review{background:var(--warn-soft);color:var(--warn);border:1px solid rgba(232,160,64,.25)}
+.btn-review:hover{background:rgba(232,160,64,.18);transform:translateY(-1px)}
+.btn-ghost{background:var(--surface);color:var(--ink-dim);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--accent-dim);color:var(--ink);transform:translateY(-1px)}
+.btn-primary{background:var(--accent);color:#0B0F15;border:1px solid transparent}
+.btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn-primary:disabled,.btn-approve:disabled{opacity:.45;cursor:default;transform:none!important;filter:none!important}
+
+/* === Detail panel === */
+.detail-panel{background:var(--surface-2);border-top:2px solid var(--accent);
+  padding:0;animation:detailIn .35s var(--spring) both}
+@keyframes detailIn{from{opacity:0;transform:translateY(-6px)}}
+.dp-head{padding:22px 24px 18px;display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.dp-head .meta{flex:1;min-width:240px}
+.dp-head h3{font-family:var(--display);font-weight:600;font-size:clamp(17px,2vw,20px);
+  letter-spacing:-.02em;line-height:1.25;text-wrap:balance}
+.dp-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}
+.dp-tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;padding:3px 8px;
+  border-radius:var(--r-xs);border:1px solid var(--border);color:var(--ink-dim);text-transform:uppercase}
+.dp-tag.accent{border-color:var(--accent-dim);color:var(--accent);background:var(--accent-soft)}
+.dp-tag.warn{border-color:rgba(232,160,64,.25);color:var(--warn);background:var(--warn-soft)}
+.dp-tag.ok{border-color:rgba(79,178,134,.25);color:var(--ok);background:var(--ok-soft)}
+.dp-section{padding:18px 24px;border-top:1px solid var(--border-soft)}
+.dp-section:last-child{padding-bottom:24px}
+.dp-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-faint);margin-bottom:12px;display:block}
+
+/* Rationale */
+.rationale{display:flex;gap:12px}
+.rationale .bar{width:3px;flex:none;border-radius:3px;background:linear-gradient(var(--accent),var(--accent-dim))}
+.rationale .body{font-size:14px;line-height:1.65;color:var(--ink-dim)}
+
+/* Evidence table */
+.ev-wrap{border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden}
+.ev-wrap table{font-size:12.5px}
+.ev-wrap thead th{font-size:9.5px;padding:10px 14px;background:var(--surface-3)}
+.ev-wrap tbody td{padding:10px 14px;border-bottom:1px solid var(--border-soft)}
+.ev-wrap tbody tr:last-child td{border-bottom:0}
+.ev-result{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.03em;
+  text-transform:uppercase;padding:2px 7px;border-radius:var(--r-xs);display:inline-block}
+.ev-match{background:var(--ok-soft);color:var(--ok)}
+.ev-nomatch{background:var(--hot-soft);color:var(--hot)}
+.ev-unknown{background:var(--warn-soft);color:var(--warn)}
+
+/* Meta strip */
+.meta-strip{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.meta-chip{font-family:var(--mono);font-size:10px;color:var(--ink-faint);padding:4px 9px;
+  border-radius:var(--r-xs);background:var(--surface);border:1px solid var(--border)}
+
+/* Actions bar */
+.dp-actions{display:flex;gap:8px;padding:16px 24px;border-top:1px solid var(--border-soft);
+  background:var(--surface-3);align-items:center;flex-wrap:wrap}
+
+/* === Manual review === */
+.review-card{border:1px solid rgba(232,160,64,.2);border-radius:var(--r);
+  background:var(--warn-soft);padding:18px 20px;margin-top:10px}
+.review-card .reason{font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--warn);margin-bottom:8px}
+.review-card .question{font-size:13.5px;line-height:1.6;color:var(--ink)}
+.review-btns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.btn-yes{background:var(--ok-soft);color:var(--ok);border:1px solid rgba(79,178,134,.25);
+  padding:8px 18px;border-radius:var(--r-sm);font-size:12px;font-weight:600;transition:all .2s var(--ease)}
+.btn-yes:hover{background:rgba(79,178,134,.2)}
+.btn-no{background:var(--hot-soft);color:var(--hot);border:1px solid rgba(239,85,101,.2);
+  padding:8px 18px;border-radius:var(--r-sm);font-size:12px;font-weight:600;transition:all .2s var(--ease)}
+.btn-no:hover{background:rgba(239,85,101,.15)}
+.btn-skip{background:var(--surface);color:var(--ink-dim);border:1px solid var(--border);
+  padding:8px 18px;border-radius:var(--r-sm);font-size:12px;font-weight:500;transition:all .2s var(--ease)}
+.btn-skip:hover{border-color:var(--accent-dim)}
+
+/* === Toast === */
+.toast{position:fixed;bottom:24px;right:24px;z-index:300;background:var(--surface);
+  border:1px solid rgba(79,178,134,.3);border-radius:var(--r);padding:14px 20px;
+  display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);
+  animation:toastIn .4s var(--spring) both;font-size:13px;font-weight:500}
+.toast[hidden]{display:none!important}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px) scale(.96)}}
+.toast .t-icon{width:24px;height:24px;border-radius:50%;background:var(--ok-soft);
+  display:grid;place-items:center;color:var(--ok);flex:none;font-size:12px}
+.toast .t-text{color:var(--ink)}
+.toast .t-sub{color:var(--ink-faint);font-size:11px;margin-top:1px}
+
+/* === Responsive === */
+.tbl-scroll{overflow-x:auto}
+@media(max-width:768px){
+  .snap-brand .page{display:none}
+  .title-cell{max-width:160px}
+  .fsearch{width:120px}
+}
+@media(max-width:480px){
+  .filter-row{gap:6px}
+  .fsearch{width:100%;margin-left:0}
+}
+</style>
+
+<!-- Reference strip -->
+<div class="ref">
+  <span class="ref-t">Design ref</span>
+  <span class="ref-sep"></span>
+  <div class="ref-tabs">
+    <button class="ref-tab active" data-screen="login">1. Login</button>
+    <button class="ref-tab" data-screen="dashboard">2. Dashboard</button>
+    <button class="ref-tab" data-screen="detail">3. Assessment detail</button>
+    <button class="ref-tab" data-screen="review">4. Manual review</button>
+    <button class="ref-tab" data-screen="approval">5. Approval flow</button>
+  </div>
+</div>
+
+<!-- Login overlay -->
+<div id="login-overlay">
+  <div class="login-card">
+    <div class="login-mark">
+      <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+        <path d="M16 2L28 9v14L16 30 4 23V9L16 2z" stroke="var(--accent)" stroke-width="1.4" fill="var(--accent-soft)"/>
+        <path d="M11 16l3 3 7-7" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h1>SNAP</h1>
+    <p class="login-sub">SAP Notes Assessment Platform</p>
+    <div class="fld"><label>Work email</label><input type="email" placeholder="you@company.com" value="a.singh@hersheys.com"></div>
+    <div class="fld"><label>Password</label><input type="password" placeholder="••••••••" value="••••••••"></div>
+    <button class="btn-sign">Sign in</button>
+    <div class="login-foot">Protected by SSO · read-only landscape access<br><a>Continue with corporate SSO →</a></div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <nav class="snap-nav">
+    <div class="snap-nav-inner">
+      <div class="snap-brand">
+        <div class="snap-mark">
+          <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
+            <path d="M16 2L28 9v14L16 30 4 23V9L16 2z" stroke="var(--accent)" stroke-width="1.6" fill="var(--accent-soft)"/>
+            <path d="M11 16l3 3 7-7" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="name">SNAP</span>
+        <span class="page">Workbench</span>
+      </div>
+      <div class="nav-right">
+        <button class="nav-icon" title="Search">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+        </button>
+        <button class="nav-icon" title="Notifications" style="position:relative">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <span style="position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:50%;background:var(--hot)"></span>
+        </button>
+        <div class="nav-avatar">AS</div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="snap-body">
+    <div class="kpi-row" id="kpi-row"></div>
+    <div class="filter-row">
+      <select class="fselect" id="fStatus"><option>All status</option><option>Ready for approval</option><option>Manual review</option><option>Complete</option></select>
+      <select class="fselect" id="fSeverity"><option>All severity</option><option>Hot News</option><option>High</option><option>Medium</option><option>Low</option></select>
+      <select class="fselect" id="fEnv"><option>All environments</option><option>Production</option><option>DMZ</option><option>Quality</option><option>Development</option></select>
+      <input type="text" class="fsearch" placeholder="Search notes...">
+    </div>
+    <div class="tbl-scroll">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>Note</th><th>Title</th><th>Severity</th><th>System</th>
+            <th>Decision</th><th>Status</th><th>Assessed</th><th style="width:100px">Action</th>
+          </tr></thead>
+          <tbody id="tbl-body"></tbody>
+        </table>
+        <div id="detail-slot"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden>
+  <span class="t-icon">✓</span>
+  <div><div class="t-text">Assessment approved</div><div class="t-sub">Note 3501122 · PRD-ECC → ready for change request</div></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var SEV_MAP = {'Hot News':{cls:'b-hot'},'High':{cls:'b-high'},'Medium':{cls:'b-med'},'Low':{cls:'b-low'}};
+var DEC_COLOR = {'APPLICABLE':'var(--accent)','NOT_APPLICABLE':'var(--ink-faint)','MANUAL_REVIEW_REQUIRED':'var(--warn)'};
+var DEC_LABEL = {'APPLICABLE':'Applicable','NOT_APPLICABLE':'Not applicable','MANUAL_REVIEW_REQUIRED':'Manual review'};
+
+var DATA = [
+  {id:'a1',note:'3501122',title:'Code injection in NetWeaver AS ABAP (ICF)',severity:'Hot News',cvss:9.8,
+   system:'PRD-ECC',env:'Production',decision:'APPLICABLE',opStatus:'READY_FOR_APPROVAL',method:'AUTOMATED',assessed:'2h ago',
+   rationale:'SAP_BASIS 757 SP0023 on PRD-ECC falls within the affected version range for note 3501122. The ICF service /sap/bc/soap/rfc is active and externally reachable. SNOTE correction has not been applied. Immediate patching recommended — CVSS 9.8 with network attack vector.',
+   evidence:[
+     {claim:'Component SAP_BASIS installed',observed:'SAP_BASIS 757',expected:'SAP_BASIS 7.*',result:'match'},
+     {claim:'SP-Level in affected range',observed:'SP0023',expected:'< SP0025',result:'match'},
+     {claim:'ICF service /sap/bc/soap active',observed:'ACTIVE',expected:'ACTIVE',result:'match'},
+     {claim:'SNOTE 3501122 applied',observed:'NOT APPLIED',expected:'NOT APPLIED',result:'match'}
+   ],meta:{method:'Automated',revision:'r3',snapshot:'2026-06-11',system:'PRD-ECC',ts:'2h ago'}},
+
+  {id:'a2',note:'3498640',title:'Missing authorization check in BW/4HANA query runtime',severity:'Hot News',cvss:9.1,
+   system:'PRD-BW',env:'Production',decision:'APPLICABLE',opStatus:'READY_FOR_APPROVAL',method:'AUTOMATED',assessed:'2h ago',
+   rationale:'SAP_BW 757 SP0018 on PRD-BW is confirmed within the affected range. The BW query runtime authorization check can be bypassed by a low-privileged user, exposing InfoProviders containing HR and finance data.',
+   evidence:[
+     {claim:'Component SAP_BW installed',observed:'SAP_BW 757',expected:'SAP_BW 7.*',result:'match'},
+     {claim:'SP-Level in affected range',observed:'SP0018',expected:'< SP0020',result:'match'},
+     {claim:'Query runtime active',observed:'ACTIVE',expected:'ACTIVE',result:'match'}
+   ],meta:{method:'Automated',revision:'r3',snapshot:'2026-06-11',system:'PRD-BW',ts:'2h ago'}},
+
+  {id:'a3',note:'3502310',title:'Server-side request forgery in SAP Web Dispatcher',severity:'High',cvss:8.6,
+   system:'PRD-WDP',env:'DMZ',decision:'APPLICABLE',opStatus:'READY_FOR_APPROVAL',method:'AUTOMATED',assessed:'2h ago',
+   rationale:'WEBDISP 7.99 PL12 on PRD-WDP matches the affected version. This node is internet-facing in the DMZ, making exploitation directly reachable from external networks.',
+   evidence:[
+     {claim:'Component WEBDISP installed',observed:'WEBDISP 7.99',expected:'WEBDISP 7.*',result:'match'},
+     {claim:'Patch level in range',observed:'PL12',expected:'< PL14',result:'match'},
+     {claim:'Internet-facing node',observed:'YES',expected:'YES',result:'match'}
+   ],meta:{method:'Automated',revision:'r2',snapshot:'2026-06-11',system:'PRD-WDP',ts:'2h ago'}},
+
+  {id:'a4',note:'3500988',title:'Information disclosure in SAP Fiori Launchpad',severity:'High',cvss:7.4,
+   system:'PRD-ECC',env:'Production',decision:'MANUAL_REVIEW_REQUIRED',opStatus:'MANUAL_REVIEW_REQUIRED',method:'HYBRID',assessed:'2h ago',
+   rationale:'UI_700 component version 800 SP09 is installed on PRD-ECC. The note references UI_700 800 broadly but the automated check could not determine whether the specific Fiori tile configuration exposes the affected OData service paths.',
+   evidence:[
+     {claim:'Component UI_700 installed',observed:'UI_700 800',expected:'UI_700 800',result:'match'},
+     {claim:'SP-Level in affected range',observed:'SP09',expected:'< SP11',result:'match'},
+     {claim:'Affected OData services exposed',observed:'UNKNOWN',expected:'ACTIVE',result:'unknown'}
+   ],meta:{method:'Hybrid',revision:'r2',snapshot:'2026-06-11',system:'PRD-ECC',ts:'2h ago'},
+   reviews:[{id:'r1',reason:'AMBIGUOUS_COMPONENT_MATCH',
+     question:'UI_700 component version 800 SP09 is installed. The note references UI_700 800 broadly. Can you confirm this system’s Fiori tile configuration exposes the affected OData service paths described in SAP Note 3500988?'}]},
+
+  {id:'a5',note:'3501455',title:'Stored XSS in Solution Manager work centers',severity:'Medium',cvss:6.1,
+   system:'QAS-S4H',env:'Quality',decision:'MANUAL_REVIEW_REQUIRED',opStatus:'MANUAL_REVIEW_REQUIRED',method:'HYBRID',assessed:'2h ago',
+   rationale:'ST 720 SP15 is installed on QAS-S4H. The Solution Manager work center UI is active but usage patterns could not be verified automatically.',
+   evidence:[
+     {claim:'Component ST installed',observed:'ST 720',expected:'ST 720',result:'match'},
+     {claim:'SP-Level in range',observed:'SP15',expected:'< SP17',result:'match'},
+     {claim:'Work center UI active',observed:'UNKNOWN',expected:'ACTIVE',result:'unknown'}
+   ],meta:{method:'Hybrid',revision:'r2',snapshot:'2026-06-11',system:'QAS-S4H',ts:'2h ago'},
+   reviews:[{id:'r2',reason:'USAGE_UNVERIFIED',
+     question:'ST 720 SP15 is installed on QAS-S4H. Can you confirm that the Solution Manager work center UI (/sap/bc/bsp/sap/solman*) is actively used and accessible?'}]},
+
+  {id:'a6',note:'3499270',title:'Improper session handling in SAP GUI for Windows',severity:'Medium',cvss:5.3,
+   system:'—',env:'—',decision:'NOT_APPLICABLE',opStatus:'COMPLETE',method:'AUTOMATED',assessed:'2h ago',
+   rationale:'Client-side fix for SAP GUI desktop application. No server component in your landscape is affected.',evidence:[],meta:{}},
+
+  {id:'a7',note:'3502590',title:'Authentication bypass in SAP Commerce Cloud',severity:'High',cvss:8.2,
+   system:'—',env:'—',decision:'NOT_APPLICABLE',opStatus:'COMPLETE',method:'AUTOMATED',assessed:'2h ago',
+   rationale:'SAP Commerce Cloud is not deployed in your landscape. No matching component found.',evidence:[],meta:{}},
+
+  {id:'a8',note:'3501033',title:'Hard-coded credentials in SAP Landscape Transformation',severity:'Medium',cvss:5.9,
+   system:'—',env:'—',decision:'NOT_APPLICABLE',opStatus:'COMPLETE',method:'AUTOMATED',assessed:'2h ago',
+   rationale:'DMIS / SLT add-on is not installed on any system in your landscape.',evidence:[],meta:{}}
+];
+
+var state = {screen:'login', selectedId:null, approvedSet:{}};
+
+function $(s,r){return (r||document).querySelector(s)}
+function $$(s,r){return [].slice.call((r||document).querySelectorAll(s))}
+
+// Screen switching
+$$('.ref-tab').forEach(function(tab){
+  tab.addEventListener('click',function(){
+    $$('.ref-tab').forEach(function(t){t.classList.remove('active')});
+    tab.classList.add('active');
+    var s = tab.dataset.screen;
+    state.screen = s;
+    if(s==='login'){state.selectedId=null;state.approvedSet={}}
+    else if(s==='dashboard'){state.selectedId=null;state.approvedSet={}}
+    else if(s==='detail'){state.selectedId='a1';state.approvedSet={}}
+    else if(s==='review'){state.selectedId='a4';state.approvedSet={}}
+    else if(s==='approval'){state.selectedId='a1';state.approvedSet={a1:true}}
+    render();
+  });
+});
+
+function render(){
+  var isLogin = state.screen==='login';
+  var lo = $('#login-overlay');
+  var ap = $('#app');
+  var toast = $('#toast');
+  if(isLogin){lo.hidden=false;ap.classList.remove('show');toast.hidden=true;return}
+  lo.hidden=true;ap.classList.add('show');
+  toast.hidden = state.screen!=='approval';
+  renderKPI();
+  renderTable();
+  renderDetail();
+}
+
+function renderKPI(){
+  var ready=0,review=0,na=0;
+  DATA.forEach(function(d){
+    if(state.approvedSet[d.id]) ready--;
+    if(d.opStatus==='READY_FOR_APPROVAL') ready++;
+    if(d.opStatus==='MANUAL_REVIEW_REQUIRED') review++;
+    if(d.decision==='NOT_APPLICABLE') na++;
+  });
+  var approved = Object.keys(state.approvedSet).length;
+  var el=$('#kpi-row');
+  el.innerHTML=
+    kpiCard(DATA.length,'Active notes','June 2026 patch','var(--accent)')+
+    kpiCard(ready-approved<0?0:ready-approved,'Ready for approval','awaiting review','var(--ok)')+
+    kpiCard(review,'Manual review','needs human input','var(--warn)')+
+    kpiCard(na,'Not applicable','auto-dismissed','var(--ink-faint)');
+}
+function kpiCard(num,lab,sub,color){
+  return '<div class="kpi"><span class="edge" style="background:'+color+'"></span>'+
+    '<div class="num" style="color:'+color+'">'+num+'</div>'+
+    '<div class="lab">'+lab+'</div><div class="sub">'+sub+'</div></div>';
+}
+
+function renderTable(){
+  var body=$('#tbl-body');
+  body.innerHTML=DATA.map(function(d){
+    var sev=SEV_MAP[d.severity];
+    var isApproved=state.approvedSet[d.id];
+    var statusCls=isApproved?'st-approved':d.opStatus==='READY_FOR_APPROVAL'?'st-ready':d.opStatus==='MANUAL_REVIEW_REQUIRED'?'st-review':'st-complete';
+    var statusLabel=isApproved?'Approved':d.opStatus==='READY_FOR_APPROVAL'?'Ready':d.opStatus==='MANUAL_REVIEW_REQUIRED'?'Review':'Complete';
+    var decColor=DEC_COLOR[d.decision];
+    var decLabel=isApproved?'Approved':DEC_LABEL[d.decision];
+    var actionHtml='';
+    if(isApproved){actionHtml='<button class="btn-sm btn-approve" disabled>Approved</button>'}
+    else if(d.opStatus==='READY_FOR_APPROVAL'){actionHtml='<button class="btn-sm btn-approve">Approve</button>'}
+    else if(d.opStatus==='MANUAL_REVIEW_REQUIRED'){actionHtml='<button class="btn-sm btn-review">Review</button>'}
+    var sel=state.selectedId===d.id?' selected':'';
+    return '<tr class="trow'+sel+'" data-id="'+d.id+'">'+
+      '<td><span class="note-link">'+d.note+'</span></td>'+
+      '<td class="title-cell">'+d.title+'</td>'+
+      '<td><span class="badge '+sev.cls+'">'+d.severity+'</span></td>'+
+      '<td class="sys-cell">'+d.system+'</td>'+
+      '<td><div class="decision-cell"><span class="dot" style="background:'+(isApproved?'var(--ok)':decColor)+'"></span>'+(isApproved?'Approved':decLabel)+'</div></td>'+
+      '<td><span class="status-pill '+statusCls+'">'+statusLabel+'</span></td>'+
+      '<td class="mono" style="font-size:11px;color:var(--ink-faint)">'+d.assessed+'</td>'+
+      '<td>'+actionHtml+'</td></tr>';
+  }).join('');
+  $$('.trow').forEach(function(row){
+    row.addEventListener('click',function(){
+      state.selectedId=row.dataset.id;
+      renderTable();
+      renderDetail();
+    });
+  });
+}
+
+function renderDetail(){
+  var slot=$('#detail-slot');
+  if(!state.selectedId){slot.innerHTML='';return}
+  var d=DATA.filter(function(x){return x.id===state.selectedId})[0];
+  if(!d||d.decision==='NOT_APPLICABLE'){slot.innerHTML='';return}
+  var isApproved=state.approvedSet[d.id];
+  var decTag=isApproved?'ok':d.decision==='APPLICABLE'?'accent':'warn';
+  var decLabel=isApproved?'Approved':DEC_LABEL[d.decision];
+  var methodTag=d.method==='AUTOMATED'?'accent':'warn';
+
+  var html='<div class="detail-panel">';
+  // Header
+  html+='<div class="dp-head"><div class="meta"><h3>'+d.title+'</h3>'+
+    '<div class="dp-tags">'+
+    '<span class="dp-tag '+decTag+'">'+decLabel+'</span>'+
+    '<span class="dp-tag '+(d.method==='AUTOMATED'?'accent':'warn')+'">'+d.method+'</span>'+
+    '<span class="dp-tag">CVSS '+d.cvss.toFixed(1)+'</span>'+
+    '<span class="dp-tag">Note '+d.note+'</span>'+
+    '</div></div></div>';
+
+  // Rationale
+  html+='<div class="dp-section"><span class="dp-eyebrow">Rationale</span>'+
+    '<div class="rationale"><div class="bar"></div><div class="body">'+d.rationale+'</div></div></div>';
+
+  // Evidence
+  if(d.evidence.length){
+    html+='<div class="dp-section"><span class="dp-eyebrow">Evidence</span>'+
+      '<div class="ev-wrap"><table><thead><tr><th>Claim</th><th>Observed</th><th>Expected</th><th>Result</th></tr></thead><tbody>';
+    d.evidence.forEach(function(e){
+      var rcls=e.result==='match'?'ev-match':e.result==='unknown'?'ev-unknown':'ev-nomatch';
+      var rlbl=e.result==='match'?'Match':e.result==='unknown'?'Unknown':'No match';
+      html+='<tr><td>'+e.claim+'</td><td class="mono" style="font-size:12px;color:var(--ink-dim)">'+e.observed+'</td>'+
+        '<td class="mono" style="font-size:12px;color:var(--ink-dim)">'+e.expected+'</td>'+
+        '<td><span class="ev-result '+rcls+'">'+rlbl+'</span></td></tr>';
+    });
+    html+='</tbody></table></div>';
+    // Meta
+    if(d.meta.method){
+      html+='<div class="meta-strip">';
+      html+='<span class="meta-chip">Method: '+d.meta.method+'</span>';
+      html+='<span class="meta-chip">Revision: '+d.meta.revision+'</span>';
+      html+='<span class="meta-chip">Snapshot: '+d.meta.snapshot+'</span>';
+      html+='<span class="meta-chip">System: '+d.meta.system+'</span>';
+      html+='<span class="meta-chip">Assessed: '+d.meta.ts+'</span>';
+      html+='</div>';
+    }
+    html+='</div>';
+  }
+
+  // Manual review cards
+  if(d.reviews&&d.reviews.length&&!isApproved){
+    html+='<div class="dp-section"><span class="dp-eyebrow">Pending manual review</span>';
+    d.reviews.forEach(function(r){
+      html+='<div class="review-card">'+
+        '<div class="reason">'+r.reason.replace(/_/g,' ')+'</div>'+
+        '<div class="question">'+r.question+'</div>'+
+        '<div class="review-btns">'+
+        '<button class="btn-yes">Yes — Applicable</button>'+
+        '<button class="btn-no">No — Not applicable</button>'+
+        '<button class="btn-skip">Skip</button>'+
+        '</div></div>';
+    });
+    html+='</div>';
+  }
+
+  // Actions
+  html+='<div class="dp-actions">';
+  if(isApproved){
+    html+='<span style="display:flex;align-items:center;gap:8px;color:var(--ok);font-size:13px;font-weight:500">'+
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>'+
+      'Approved — ready for change request generation</span>';
+  } else if(d.opStatus==='READY_FOR_APPROVAL'){
+    html+='<button class="btn-sm btn-primary">Approve assessment</button>'+
+      '<button class="btn-sm btn-ghost">Dismiss</button>'+
+      '<button class="btn-sm btn-ghost">Defer</button>';
+  } else {
+    html+='<button class="btn-sm btn-ghost" disabled>Resolve reviews to unlock approval</button>';
+  }
+  html+='</div></div>';
+  slot.innerHTML=html;
+}
+
+// Init
+render();
+})();
+</script>

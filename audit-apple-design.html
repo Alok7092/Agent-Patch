@@ -1,0 +1,539 @@
+<title>SNAP Design Audit</title>
+<style>
+:root {
+  --ground: #FAFBFD;
+  --surface: #FFFFFF;
+  --surface-raised: #F5F7FB;
+  --border: #E4E8F0;
+  --border-soft: #EEF1F7;
+  --ink: #1B2030;
+  --ink-secondary: #4A5268;
+  --ink-tertiary: #8690A6;
+  --accent: #5B47D6;
+  --accent-soft: rgba(91, 71, 214, 0.08);
+  --accent-medium: rgba(91, 71, 214, 0.14);
+  --warn: #C44B25;
+  --warn-soft: rgba(196, 75, 37, 0.07);
+  --good: #2E8A62;
+  --good-soft: rgba(46, 138, 98, 0.07);
+  --info: #2970B8;
+  --info-soft: rgba(41, 112, 184, 0.07);
+  --mono: 'SF Mono', ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
+  --body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --display: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #121620;
+    --surface: #1A1F2E;
+    --surface-raised: #222838;
+    --border: #2C3448;
+    --border-soft: #242B3C;
+    --ink: #E4E8F2;
+    --ink-secondary: #9EA6BA;
+    --ink-tertiary: #606A82;
+    --accent: #8B7BF0;
+    --accent-soft: rgba(139, 123, 240, 0.1);
+    --accent-medium: rgba(139, 123, 240, 0.18);
+    --warn: #E8724E;
+    --warn-soft: rgba(232, 114, 78, 0.1);
+    --good: #4FB886;
+    --good-soft: rgba(79, 184, 134, 0.1);
+    --info: #5BA4E8;
+    --info-soft: rgba(91, 164, 232, 0.1);
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #121620;
+  --surface: #1A1F2E;
+  --surface-raised: #222838;
+  --border: #2C3448;
+  --border-soft: #242B3C;
+  --ink: #E4E8F2;
+  --ink-secondary: #9EA6BA;
+  --ink-tertiary: #606A82;
+  --accent: #8B7BF0;
+  --accent-soft: rgba(139, 123, 240, 0.1);
+  --accent-medium: rgba(139, 123, 240, 0.18);
+  --warn: #E8724E;
+  --warn-soft: rgba(232, 114, 78, 0.1);
+  --good: #4FB886;
+  --good-soft: rgba(79, 184, 134, 0.1);
+  --info: #5BA4E8;
+  --info-soft: rgba(91, 164, 232, 0.1);
+}
+
+* { box-sizing: border-box; margin: 0; }
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  padding: 0;
+}
+
+.page {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 56px clamp(20px, 4vw, 48px) 80px;
+}
+
+header {
+  margin-bottom: 48px;
+}
+
+header .kicker {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+header h1 {
+  font-family: var(--display);
+  font-size: clamp(28px, 4vw, 38px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+header .subtitle {
+  margin-top: 12px;
+  font-size: 16px;
+  color: var(--ink-secondary);
+  max-width: 600px;
+  line-height: 1.55;
+}
+
+/* Severity system */
+.sev { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.03em; padding: 3px 9px; border-radius: 5px; }
+.sev-critical { background: var(--warn-soft); color: var(--warn); }
+.sev-important { background: var(--accent-soft); color: var(--accent); }
+.sev-moderate { background: var(--info-soft); color: var(--info); }
+.sev-minor { background: var(--good-soft); color: var(--good); }
+.sev::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* Sections */
+.finding-group {
+  margin-bottom: 44px;
+}
+
+.finding-group > h2 {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  margin-bottom: 6px;
+  color: var(--ink);
+}
+
+.finding-group > .group-ref {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-tertiary);
+  margin-bottom: 20px;
+}
+
+.finding {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin-bottom: 12px;
+  position: relative;
+}
+
+.finding-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.finding h3 {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.finding .issue {
+  color: var(--ink-secondary);
+  font-size: 14px;
+  line-height: 1.55;
+  margin-bottom: 12px;
+}
+
+.finding .fix {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink-secondary);
+  padding: 12px 14px;
+  background: var(--surface-raised);
+  border-radius: 8px;
+  border-left: 3px solid var(--accent);
+}
+
+.finding .fix strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.finding code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-soft);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: var(--accent);
+}
+
+/* Summary table */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 44px;
+}
+
+.summary-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  text-align: center;
+}
+
+.summary-card .num {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.summary-card .label {
+  font-size: 12px;
+  color: var(--ink-tertiary);
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+/* Score bar */
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.score-row .dimension {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-secondary);
+  width: 140px;
+  flex: none;
+}
+
+.score-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--surface-raised);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.score-bar .fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.fill-good { background: var(--good); }
+.fill-warn { background: var(--warn); }
+.fill-accent { background: var(--accent); }
+.fill-info { background: var(--info); }
+
+.score-row .value {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-tertiary);
+  width: 36px;
+  text-align: right;
+}
+
+/* Divider */
+hr {
+  border: none;
+  border-top: 1px solid var(--border-soft);
+  margin: 36px 0;
+}
+
+/* Footer */
+.audit-footer {
+  margin-top: 56px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-soft);
+  font-size: 12px;
+  color: var(--ink-tertiary);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .score-row .dimension { width: 100px; font-size: 12px; }
+  .finding-header { flex-direction: column; gap: 8px; }
+}
+</style>
+
+<div class="page">
+  <header>
+    <div class="kicker">Apple Design Audit</div>
+    <h1>SNAP UI — Fluid Interface Review</h1>
+    <p class="subtitle">Evaluated against Apple's design principles from WWDC — fluid motion, response, interruptibility, materials, typography, and spatial consistency. 18 findings across 7 dimensions.</p>
+  </header>
+
+  <div class="summary-grid">
+    <div class="summary-card"><div class="num" style="color:var(--warn)">5</div><div class="label">Critical</div></div>
+    <div class="summary-card"><div class="num" style="color:var(--accent)">6</div><div class="label">Important</div></div>
+    <div class="summary-card"><div class="num" style="color:var(--info)">4</div><div class="label">Moderate</div></div>
+    <div class="summary-card"><div class="num" style="color:var(--good)">3</div><div class="label">Minor</div></div>
+  </div>
+
+  <div style="margin-bottom: 44px;">
+    <div class="score-row"><span class="dimension">Response</span><div class="score-bar"><div class="fill fill-warn" style="width:35%"></div></div><span class="value">3.5</span></div>
+    <div class="score-row"><span class="dimension">Interruptibility</span><div class="score-bar"><div class="fill fill-warn" style="width:30%"></div></div><span class="value">3.0</span></div>
+    <div class="score-row"><span class="dimension">Spatial consistency</span><div class="score-bar"><div class="fill fill-warn" style="width:40%"></div></div><span class="value">4.0</span></div>
+    <div class="score-row"><span class="dimension">Materials & depth</span><div class="score-bar"><div class="fill fill-accent" style="width:55%"></div></div><span class="value">5.5</span></div>
+    <div class="score-row"><span class="dimension">Typography</span><div class="score-bar"><div class="fill fill-accent" style="width:65%"></div></div><span class="value">6.5</span></div>
+    <div class="score-row"><span class="dimension">Accessibility</span><div class="score-bar"><div class="fill fill-warn" style="width:40%"></div></div><span class="value">4.0</span></div>
+    <div class="score-row"><span class="dimension">Craft & delight</span><div class="score-bar"><div class="fill fill-good" style="width:70%"></div></div><span class="value">7.0</span></div>
+  </div>
+
+  <hr>
+
+  <!-- ============ RESPONSE ============ -->
+  <div class="finding-group">
+    <h2>Response — Kill Latency</h2>
+    <div class="group-ref">Apple principle §1: "The moment lag appears, the feeling of directness falls off a cliff."</div>
+
+    <div class="finding">
+      <div class="finding-header">
+        <h3>No press feedback on interactive cards</h3>
+        <span class="sev sev-critical">Critical</span>
+      </div>
+      <p class="issue">The <code>.card</code> elements in the triage queue respond on hover (<code>translateY(-1px)</code>) but have zero feedback on pointer-down. Apple mandates that feedback appears on touch-down/press, not release. A user pressing a card sees nothing until the click resolves and the detail panel updates — that dead moment breaks direct manipulation.</p>
+      <div class="fix"><strong>Fix:</strong> Add <code>.card:active { transform: scale(0.98); transition: transform 80ms ease-out; }</code> so the card responds the instant pressure is applied. Same for <code>.nrow</code> (dashboard rows), <code>.chip</code> (filters), and <code>.stat</code> (stat tiles).</div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-header">
+        <h3>Buttons lack active state</h3>
+        <span class="sev sev-important">Important</span>
+      </div>
+      <p class="issue">The <code>.btn</code> class (primary, ghost) and <code>.btn-block</code> (login) define <code>:hover</code> but no <code>:active</code> transform or opacity change. Apple's tap model: highlight on touch-down, commit on touch-up. Currently buttons feel "spongy" — hover brightness change, but no physical depression.</p>
+      <div class="fix"><strong>Fix:</strong> Add <code>.btn:active { transform: scale(0.96); opacity: 0.9; }</code> with a very fast transition (~60ms). The press must feel instant.</div>
+    </div>
+  </div>
+
+  <!-- ============ INTERRUPTIBILITY ============ -->
+  <div class="finding-group">
+    <h2>Interruptibility — Never Lock Out Input</h2>
+    <div class="group-ref">Apple principle §3: "Every animation must be interruptible and redirectable at any moment."</div>
+
+    <div class="finding">
+      <div class="finding-header">
+        <h3>Change request drafting animation is non-interruptible</h3>
+        <span class="sev sev-critical">Critical</span>
+      </div>
+      <p class="issue">When "Draft change request" is clicked, a <code>setTimeout(1100ms)</code> fires and the UI shows a spinner. During this 1.1 seconds, the user cannot cancel the draft, navigate away safely, or interact with the drafting state. The spinner is a CSS <code>@keyframes spin</code> — a prescribed rotation that cannot be grabbed or redirected.</p>
+      <div class="fix"><strong>Fix:</strong> Replace the hard timer with a cancellable state machine. Show the spinner but allow a "Cancel" button. If the user navigates away during drafting, resolve gracefully. The spinner itself is fine as ambient feedback — it doesn't need to be interruptible since it's decorative, not interactive.</div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-header">
+        <h3>View transitions are instantaneous cuts with no interruptible crossfade</h3>
+        <span class="sev sev-critical">Critical</span>
+      </div>
+      <p class="issue">Switching between Dashboard, Security Notes, Landscape, and Approvals is a hard <code>display: none</code> toggle. There's no transition between states — the screen flashes to a new layout. Apple says "enter and exit along the same path." Here there is no path at all. Worse: if a user is mid-scroll on one view and accidentally clicks another nav item, there's no way to "undo" the navigation — the scroll position is lost.</p>
+      <div class="fix"><strong>Fix:</strong> Add a 150ms opacity crossfade between views. Use <code>opacity: 0 → 1</code> with a critically-damped ease. Hide with <code>visibility: hidden</code> after fade completes, not <code>display: none</code> which can't be transitioned. Preserve scroll positions per view so returning doesn't reset the user's place.</div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-header">
+        <h3>Infinite perpetual animations cannot be paused</h3>
+        <span class="sev sev-moderate">Moderate</span>
+      </div>
+      <p class="issue">The <code>@keyframes pulse</code> (live dot), <code>@keyframes blip</code> (AI-inferred system indicators), and <code>@keyframes spin</code> (drafting) run indefinitely. While decorative animations don't need to be "grabbed," perpetual motion consumes attention and GPU resources. Apple's guideline: motion serves utility, not decoration.</p>
+      <div class="fix"><strong>Fix:</strong> Limit <code>pulse</code> to 3 cycles then stop (use <code>animation-iteration-count: 3</code>), re-triggering only on state change. The <code>blip</code> animation on landscape cards should settle after the user has had time to notice it.</div>
+    </div>
+  </div>
+
+  <!-- ============ SPATIAL CONSISTENCY ============ -->
+  <div class="finding-group">
+    <h2>Spatial Consistency — Symmetric Paths</h2>
+    <div class="group-ref">Apple principle §7: "If something disappears one way, we expect it to emerge from where it came."</div>
+
+    <div class="finding">
+      <div class="finding-header">
+        <h3>Detail panel content swaps have no spatial origin</h3>
+        <span class="sev sev-critical">Critical</span>
+      </div>
+      <p class="issue">When a user clicks a card in the queue, the detail panel's <code>innerHTML</code> is replaced wholesale. The new content materializes from nowhere — it doesn't arrive from the direction of the card that was clicked. This violates "anchor interactions to their source." The user's eye must travel from card to detail content, and there's no visual bridge.</p>
+      <div class="fix"><strong>Fix:</strong> Fade the old detail content out (80ms), then fade the new content in (120ms). Add a subtle vertical slide (8px) in the direction of the selected card relative to the previous selection — if clicking a card below the current selection, new content enters from below, and vice versa. This is the "hint in the direction of the gesture" principle (§8).</div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-header">
+        <h3>Login-to-app transition has no spatial relationship</h3>
+        <span class="sev sev-moderate">Moderate</span>
+      </div>
+      <p class="issue">The login card disappears and the app shell appears via class toggles. There's no spatial metaphor — the login doesn't "transform into" or "reveal" the app. Apple's precedent: unlock transitions on iOS scale/dissolve the lock screen away to reveal the home screen beneath it.</p>
+      <div class="fix"><strong>Fix:</strong> After login, scale the login card down slightly (0.96) while fading it to opacity 0. Simultaneously, fade the app shell in from opacity 0. Duration: ~300ms, critically damped. The login recedes; the workspace advances.</div>
+    </div>
+  </div>
+
+  <!-- ============ MATERIALS & DEPTH ============ -->
+  <div class="finding-group">
+    <h2>Materials & Depth — Translucency Conveys Hierarchy</h2>
+    <div class="group-ref">Apple principle §12: "Build nav/toolbars as translucent layers with content scrolling underneath."</div>
+
+    <div class="finding">
+      <div class="finding-header">
+        <h3>Good: Nav uses backdrop-filter correctly</h3>
+        <span class="sev sev-minor">Credit</span>
+      </div>
+      <p class="issue">The sticky <code>nav</code> uses <code>backdrop-filter: blur(10px)</code> with <code>--header-bg: rgba(15,19,27,.82)</code>. Content scrolls beneath it. This is textbook Apple materials usage — a floating functional layer that brings structure without stealing focus.</p>
+      <div class="fix"><strong>Enhance:</strong> Consider adding a subtle top-edge highlight (<code>border-top: 1px solid rgba(255,255,255,0.04)</code> in dark mode) to give the material a faint lit edge, simulating light catching the surface.</div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-header">
+        <h3>Panels are flat — no depth hierarchy between stacked surfaces</h3>
+        <span class="sev sev-important">Important</span>
+      </div>
+      <p class="issue">All <code>.panel</code> elements share the same background (<code>--panel</code>) and border treatment. The detail panel, side panels, and main content panels all sit at the same visual elevation. Apple's rule: "material weight encodes hierarchy" — structural regions (sidebars) use darker/heavier materials, while interactive elements (the detail) use lighter surfaces.</p>
+      <div class="fix"><strong>Fix:</strong> Give the detail panel a slightly elevated treatment — either a stronger shadow or a marginally lighter background than the queue panel. The dashboard stat tiles already do this partially with their gradient backgrounds. Extend this vocabulary: primary interaction surfaces float above navigation/chrome surfaces.</div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-header">
+        <h3>Hard borders instead of scroll-edge effects</h3>
+        <span class="sev sev-moderate">Moderate</span>
+      </div>
+      <p class="issue">The <code>.panel-head</code> uses <code>border-bottom: 1px solid var(--line-soft)</code> as a hard divider between the header and scrollable content. Apple recommends: "Scroll edge effects, not hard dividers — fade a small blur/gradient mask where content meets floating chrome."</p>
+      <div class="fix"><strong>Fix:</strong> Replace the hard border under panel headers with a gradient mask on the scroll container's top: <code>mask-image: linear-gradient(to bottom, transparent, black 12px)</code>. The divider appears only when content is scrolled underneath the header (use a scroll listener to toggle a class).</div>
+    </div>
+  </div>
+
+  <!-- ============ TYPOGRAPHY ============ -->
+  <div class="finding-group">
+    <h2>Typography — Optical Sizing & Scale</h2>
+    <div class="group-ref">Apple principle §15: "Tracking is size-specific — never one value for all sizes."</div>
+
+    <div class="finding">
+      <div class="finding-header">
+        <h3>Eyebrow text is too small and over-tracked</h3>
+        <span class="sev sev-important">Important</span>
+      </div>
+      <p class="issue">The <code>.eyebrow</code> class sets <code>font-size: 10.5px; letter-spacing: .16em</code>. At 10.5px, this tracking pushes characters apart to the point of reduced legibility on lower-DPI screens. Apple's guidance: small text wants slightly positive tracking for legibility, but 0.16em is excessive — it's heading-label spacing applied at caption size.</p>
+      <div class="fix"><strong>Fix:</strong> Increase to <code>font-size: 11px; letter-spacing: 0.08em</code>. The slightly tighter tracking maintains the uppercase-label feel while keeping characters recognizable. Alternatively, bump to 11.5px and reduce to 0.06em.</div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-header">
+        <h3>External font dependencies will fail under CSP</h3>
+        <span class="sev sev-important">Important</span>
+      </div>
+      <p class="issue">The HTML loads Space Grotesk, Inter, and IBM Plex Mono from Google Fonts via <code>&lt;link&gt;</code>. In a CSP-restricted context (or offline scenario), these will fail silently and fall back to system fonts. The design's character depends heavily on Space Grotesk's geometric display style — the fallback will look markedly different.</p>
+      <div class="fix"><strong>Fix:</strong> For the artifact/self-contained version, inline the font files as base64 <code>@font-face</code> declarations. For the production app (where CSP allows the Google Fonts origin), add <code>font-display: swap</code> to avoid invisible text during load. Consider whether the system font stack (<code>-apple-system, system-ui</code>) achieves similar goals with zero load cost.</div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-header">
+        <h3>Display type tracking is correct</h3>
+        <span class="sev sev-minor">Credit</span>
+      </div>
+      <p class="issue">The <code>.verdict .lead</code> and page headings use <code>letter-spacing: -.02em</code> and <code>-.015em</code> on larger sizes, loosening to normal at body size. This follows Apple's inverse tracking rule correctly — tighten large, leave body near zero.</p>
+      <div class="fix"><strong>Maintain:</strong> The type scale (10.5px mono labels → 14px body → 15-16px panel heads → 21-28px page heads → 26-36px stat numbers) is well-structured with clear hierarchy.</div>
+    </div>
+  </div>
+
+  <!-- ============ ACCESSIBILITY ============ -->
+  <div class="finding-group">
+    <h2>Reduced Motion & Accessibility</h2>
+    <div class="group-ref">Apple principle §14: "Reduced motion doesn't mean no feedback — it means a gentler, non-vestibular equivalent."</div>
+
+    <div class="finding">
+      <div class="finding-header">
+        <h3>prefers-reduced-motion kills ALL motion indiscriminately</h3>
+        <span class="sev sev-critical">Critical</span>
+      </div>
+      <p class="issue">The current rule: <code>@media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }</code>. This nuclear approach removes all transitions — including subtle opacity fades that Apple says should be preserved. A user who enables reduced motion still benefits from 200ms crossfades. Killing transitions also removes hover state changes, making the interface feel broken rather than gentler.</p>
+      <div class="fix"><strong>Fix:</strong> Replace the blanket kill with targeted overrides. Remove springs, slides, and bounces. Keep short opacity/color transitions (≤200ms). Keep transform transitions that are purely scale-based (press feedback). Remove <code>translateY</code> hover lifts. Replace the pulse/blip keyframes with a static indicator.</div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-header">
+        <h3>No prefers-reduced-transparency or prefers-contrast support</h3>
+        <span class="sev sev-important">Important</span>
+      </div>
+      <p class="issue">Apple explicitly calls out three independent signals: reduced-motion, reduced-transparency, and increased-contrast. The nav's <code>backdrop-filter: blur(10px)</code> with a semi-transparent background will be hard to read for users who need reduced transparency. No increased-contrast treatment exists.</p>
+      <div class="fix"><strong>Fix:</strong> Add <code>@media (prefers-reduced-transparency: reduce) { nav { background: var(--base); backdrop-filter: none; } }</code> and <code>@media (prefers-contrast: more) { .panel { border-width: 2px; } .badge { border: 1px solid currentColor; } }</code></div>
+    </div>
+  </div>
+
+  <!-- ============ GESTURES & RUBBER-BANDING ============ -->
+  <div class="finding-group">
+    <h2>Gesture Feel & Boundaries</h2>
+    <div class="group-ref">Apple principles §9-10: Rubber-banding at boundaries; gesture design details.</div>
+
+    <div class="finding">
+      <div class="finding-header">
+        <h3>Horizontal ribbon scroll has no edge indicators</h3>
+        <span class="sev sev-moderate">Moderate</span>
+      </div>
+      <p class="issue">The <code>.ribbon</code> (landscape impact strip) scrolls horizontally with no visual affordance at the edges. A user doesn't know there's more content to the right. Apple uses gradient edge masks to hint at scroll direction — content fades out at the clipped edge, telegraphing that more exists.</p>
+      <div class="fix"><strong>Fix:</strong> Add edge masks using <code>mask-image: linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent)</code> or overlay gradient pseudo-elements that show/hide based on scroll position.</div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-header">
+        <h3>Filter chips lack tactile press feedback</h3>
+        <span class="sev sev-minor">Minor</span>
+      </div>
+      <p class="issue">The <code>.chip</code> filter buttons in the Security Notes view change border-color on hover but provide no press-state feedback. Per Apple's tap model: highlight on pointer-down, commit on release, and allow cancel-by-dragging-away.</p>
+      <div class="fix"><strong>Fix:</strong> Add <code>.chip:active { transform: scale(0.95); transition: transform 60ms; }</code> and consider a brief background-color flash on selection to acknowledge the state change.</div>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="finding-group" style="margin-bottom: 24px;">
+    <h2>Summary of Priorities</h2>
+    <p style="color: var(--ink-secondary); margin-top: 8px; font-size: 14px; line-height: 1.6;">
+      The UI's visual craft is strong — the severity color system, panel layouts, and typography scale are well-considered. The primary gaps are all <em>behavioral</em>: missing press feedback, hard view cuts instead of crossfades, a blanket reduced-motion rule that removes all transitions, and the non-interruptible drafting flow. Fixing the five Critical items would transform the app from a well-styled static document into something that feels alive under the hand.
+    </p>
+    <p style="color: var(--ink-secondary); margin-top: 12px; font-size: 14px; line-height: 1.6;">
+      The single highest-leverage change: add <code>:active</code> scale transforms to every tappable element. It takes 10 minutes and immediately makes the entire interface feel responsive.
+    </p>
+  </div>
+
+  <div class="audit-footer">
+    <span>Evaluated against Apple WWDC 2018–2026 design principles</span>
+    <span style="font-family: var(--mono);">18 findings · 7 dimensions</span>
+  </div>
+</div>
